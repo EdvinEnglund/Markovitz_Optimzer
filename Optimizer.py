@@ -1,62 +1,73 @@
 """
-This script calculates the weight distribution
-sigma is covariance matrix of assets
-mu is expected return of assets
-p is chosen expected return
+This script calculates the weight distribution of the lowest variance
+portfolio for a given expected return.
+
+Inputs:
+- sigma: covariance matrix of assets
+- mu: expected return of assets
+- p: chosen expected return (caps at leverage)
+L is leverage
 """
 import numpy as np
 from scipy.optimize import minimize
 from Fetcher import set_tickers, get_stats
 import math
 
+# Helper to cap expected return
+def max_return(mu, L, short_allowed=True):
+    if short_allowed:
+        return L * max(mu) + (L - 1) * min(mu)  # approximate max return w. shorting
+    else:
+        return max(mu)
+
+# Helper function for variance
 def objective(w, sigma):
     return w.T @ sigma @ w
 
-def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=False):
+def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00):
 
-    # Define objective function within scope of sigma
-    def objective(w): return w.T @ sigma @ w
+    p = min(p, max_return(mu, L, short_allowed=short_allowed))
 
     n = len(mu)
 
-    # --- MUST FIX CONSTRAINTS SO WEIGHTS SUM TO 1 WHEN SHORTING ALLOWED
-    constraints = [{"type": "eq", "fun":lambda w: np.sum(w) - 1},
-                   {"type": "eq", "fun": lambda w: np.dot(mu, w) - p}]
+    constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
+                   {"type": "eq", "fun": lambda w: np.dot(mu, w) - p},
+                   {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
 
     if short_allowed:
-        bounds = [(-1, 1)] * n
+        bounds = [(None, None)] * n
     else:
-        bounds = [(0, 1)] * n
+        bounds = [(0, None)] * n
     #initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
         objective,
         w0,
+        args=(sigma),
         method = "SLSQP",
         bounds=bounds,
         constraints=constraints
     )
     w = res.x
-    var = objective(w)
+    var = objective(w, sigma)
     return w, var
 def set_expected_return():
     try:
-        p = float(input("choose expected return [0-1]: "))
+        p = float(input("Choose expected return: "))
     except ValueError:
         print("Invalid input. Using default alpha = 0.1")
         p = 0.1
-    if p > 1:
-        p = 1
     if p < 0:
         p = 0
-    print(f"setting expected return to {p}")
+    print(f"Setting expected return to {p}")
     return p
 
 if __name__ == "__main__":
-    tickers = set_tickers()
+    #tickers = set_tickers()
+    tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
     valid_tickers, mu, sigma = get_stats(tickers, 5)
     p = set_expected_return()
-    w, var = get_weigths_by_p(mu, sigma, p, short_allowed=True)
+    w, var = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=1.0)
 
     print(f"Optimal weights for expected return {p}:")
     for i, ticker in enumerate(valid_tickers):

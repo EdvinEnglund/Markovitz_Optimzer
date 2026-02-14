@@ -1,4 +1,7 @@
-1. Fix leverage when shorting
-2. Add list of strings as valid input
-2. Move functions
-3. Create clean pipelines and scripts
+1. Add list of strings as valid input
+2. Add shorting fees and interest
+3. Move functions
+4. Create clean pipelines and scripts:
+    - one based on p
+    - one based on alpha
+    - one based on the optimal choice
