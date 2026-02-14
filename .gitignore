@@ -1,0 +1,14 @@
+# Python bytecode (compiled files)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments (if you use venv or conda)
+venv/
+.venv/
+.env
+env/
+
+# Data and Logs
+*.log
+.DS_Store
