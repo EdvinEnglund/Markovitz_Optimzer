@@ -1,0 +1,4 @@
+1. Fix leverage when shorting
+2. Add list of strings as valid input
+2. Move functions
+3. Create clean pipelines and scripts
