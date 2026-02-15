@@ -20,9 +20,12 @@ def max_return(mu, L, short_allowed=True, short_cost = 0.0):
     else:
         return max(mu)
 
-# Helper function for variance
-def objective(w, sigma):
-    return w.T @ sigma @ w
+# Objective function: variance + shorting cost
+def objective(w, sigma, short_cost):
+    variance = w.T @ sigma @ w
+    short_positions = np.abs(np.minimum(w, 0))
+    shorting_penalty = np.sum(short_positions) * short_cost
+    return variance + shorting_penalty
 
 def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost=0.0):
 
@@ -31,12 +34,10 @@ def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost
 
     n = len(mu)
 
-    def get_short_drag(w):
-        short_positions = np.abs(np.minimum(w, 0))
-        return np.sum(short_positions) * short_cost
-
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
-                   {"type": "eq", "fun": lambda w: np.dot(mu, w) - get_short_drag(w) - p},
+                   {"type": "eq", "fun": lambda w: np.dot(mu, w)
+                                                   - (np.sum(np.abs(np.minimum(w, 0))) * short_cost)
+                                                   - p},
                    {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
 
     if short_allowed:
@@ -48,14 +49,13 @@ def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost
     res = minimize(
         objective,
         w0,
-        args=(sigma),
+        args=(sigma, short_cost),
         method = "SLSQP",
         bounds=bounds,
         constraints=constraints
     )
     w = res.x
-    var = objective(w, sigma)
-    return w, var
+    return w
 def set_expected_return():
     try:
         p = float(input("Choose expected return: "))
@@ -72,8 +72,8 @@ if __name__ == "__main__":
     tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
     valid_tickers, mu, sigma = get_stats(tickers, 5)
     p = set_expected_return()
-    w, var = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=3, short_cost=0.02)
-
+    w = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=3, short_cost=0.02)
+    var =  w.T @ sigma @ w
     print(f"Optimal weights for expected return {p}:")
     for i, ticker in enumerate(valid_tickers):
         print(f"{ticker}: {w[i]*100:.2f}%")
