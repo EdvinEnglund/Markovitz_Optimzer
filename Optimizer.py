@@ -14,9 +14,9 @@ from Fetcher import set_tickers, get_stats
 import math
 
 # Helper to cap expected return
-def max_return(mu, L, short_allowed=True):
+def max_return(mu, L, short_allowed=True, short_cost = 0.0):
     if short_allowed:
-        return L * max(mu) + (L - 1) * min(mu)  # approximate max return w. shorting
+        return L * max(mu) + (L - 1) * min(mu) - short_cost  # approximate max return w. shorting
     else:
         return max(mu)
 
@@ -24,14 +24,19 @@ def max_return(mu, L, short_allowed=True):
 def objective(w, sigma):
     return w.T @ sigma @ w
 
-def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00):
+def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost=0.0):
 
-    p = min(p, max_return(mu, L, short_allowed=short_allowed))
+    #cap raturns
+    p = min(p, max_return(mu, L, short_allowed=short_allowed, short_cost=short_cost))
 
     n = len(mu)
 
+    def get_short_drag(w):
+        short_positions = np.abs(np.minimum(w, 0))
+        return np.sum(short_positions) * short_cost
+
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
-                   {"type": "eq", "fun": lambda w: np.dot(mu, w) - p},
+                   {"type": "eq", "fun": lambda w: np.dot(mu, w) - get_short_drag(w) - p},
                    {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
 
     if short_allowed:
@@ -67,7 +72,7 @@ if __name__ == "__main__":
     tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
     valid_tickers, mu, sigma = get_stats(tickers, 5)
     p = set_expected_return()
-    w, var = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=1.0)
+    w, var = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=3, short_cost=0.02)
 
     print(f"Optimal weights for expected return {p}:")
     for i, ticker in enumerate(valid_tickers):
