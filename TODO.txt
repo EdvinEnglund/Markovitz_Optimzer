@@ -1,7 +1,15 @@
-1. Add list of strings as valid input
-2. Add shorting fees and interest
-3. Move functions
-4. Create clean pipelines and scripts:
+1. Create function for solving based on expected variance/volatility
+2. Create function for optimal portfolio on tangent line
+3. Make Fetcher accept more input types, json, stdipt, csv etc.
+4. Add individual shortability and fee capability
+    - Must be vectors, not scalar / boolean
+    - Make shorting_fee np.full(short_cost, n)
+    - Adjust only if unique fees
+4. Move functions, clean
+5. Create clean pipelines and scripts:
     - one based on p
     - one based on alpha
+    - one on based variance/volatility
     - one based on the optimal choice
+    - efficient frontier
+6. Combine into small app

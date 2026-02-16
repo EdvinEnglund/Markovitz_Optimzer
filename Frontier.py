@@ -12,18 +12,21 @@ from Fetcher import set_tickers, get_stats
 import math
 
 
-# Objective function for alpha
-def F_alpha(w, r, C, alpha):
-    return alpha * (w.T @ C @ w) - (1.0 - alpha) * (r @ w)
+# Objective function for alpha, adjust for shorting cost
+def F_alpha(w, r, C, alpha, short_cost):
+    fa = alpha * (w.T @ C @ w) - (1.0 - alpha) * (r @ w)
+    short_positions = np.abs(np.minimum(w, 0))
+    shorting_penalty = np.sum(short_positions) * short_cost
+    return fa + shorting_penalty
 
-def get_weights_by_alpha(r, C, alpha, short_allowed = True, L = 1.6):
+def get_weights_by_alpha(r, C, alpha, short_allowed = True, L = 1.0, short_cost = 0.0):
     if L < 1:
         L = 1
 
     n = len(r)
 
-
     cons = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
+    # Adjust gross leverage
     if L > 1.0:
         cons.append({"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))})
 
@@ -36,7 +39,7 @@ def get_weights_by_alpha(r, C, alpha, short_allowed = True, L = 1.6):
     res = minimize(
         F_alpha,
         w0,
-        args = (r, C, alpha),
+        args = (r, C, alpha, short_cost),
         method='SLSQP',
         constraints=cons,
         bounds=bounds
@@ -44,13 +47,20 @@ def get_weights_by_alpha(r, C, alpha, short_allowed = True, L = 1.6):
 
     return res.x
 
-def calculate_efficient_frontier(mu, sigma, L):
+def calculate_efficient_frontier(mu, sigma, L =1.0, short_cost = 0.0):
     res_short = []
     res_no_short = []
     alphas = np.arange(0.05, 1.01, 0.05)
     for alpha in alphas:
         #shorting allowed
-        short_w = get_weights_by_alpha(mu, sigma, alpha, short_allowed = True, L = L)
+        short_w = get_weights_by_alpha(
+            mu,
+            sigma,
+            alpha,
+            short_allowed = True,
+            L = L,
+            short_cost = short_cost
+        )
         res_short.append((
             short_w.T @ sigma @ short_w,
             mu@short_w,
@@ -58,7 +68,13 @@ def calculate_efficient_frontier(mu, sigma, L):
         ))
 
         #shorting disallowed
-        no_short_w = get_weights_by_alpha(mu, sigma, alpha, short_allowed = False, L = L)
+        no_short_w = get_weights_by_alpha(
+            mu,
+            sigma,
+            alpha,
+            short_allowed = False,
+            L = L,
+            short_cost = short_cost)
         res_no_short.append((
             no_short_w.T @ sigma @ no_short_w,
             mu @ no_short_w,
@@ -86,7 +102,8 @@ if __name__ == "__main__":
     #tickers = set_tickers()
     tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
     _, mu, sigma = get_stats(tickers, 5)
-    short, no_short = calculate_efficient_frontier(mu, sigma, L = 1.01)
+    short, no_short = calculate_efficient_frontier(mu, sigma, L = 1.15, short_cost = 0.01)
+
     plot_frontier(short, no_short)
 
 

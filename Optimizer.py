@@ -5,8 +5,8 @@ portfolio for a given expected return.
 Inputs:
 - sigma: covariance matrix of assets
 - mu: expected return of assets
-- p: chosen expected return (caps at leverage)
-L is leverage
+- p: chosen expected return (caps at highest returning asset times L)
+- L: max gross leverage
 """
 import numpy as np
 from scipy.optimize import minimize
@@ -36,6 +36,7 @@ def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost
 
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
                    {"type": "eq", "fun": lambda w: np.dot(mu, w)
+                                                    # subtracting shorting cost for short positions
                                                    - (np.sum(np.abs(np.minimum(w, 0))) * short_cost)
                                                    - p},
                    {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
