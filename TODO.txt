@@ -1,20 +1,22 @@
 1. Create function for solving based on expected variance/volatility
 2. Create function for optimal portfolio on tangent line, maximize sharpe
 3. Make output functions for portfolio weights, expected return, volatility, sharpe
-4. Move functions, clean
-5. Make Fetcher accept more input types, json, stdipt, csv etc.
-6. Add individual shortability and fee capability (Optional)
+4. Create new functions for expected return
+5. Make adjustments for dividends (research if this makes sense)
+6. Move functions, clean
+7. Make Fetcher accept more input types, json, stdipt, csv etc.
+8. Add individual shortability and fee capability (Optional)
     - Must be vectors, not scalar / boolean
     - Make shorting_fee np.full(short_cost, n)
     - Adjust only if unique fees
-7. Create clean pipelines and scripts:
+9. Create clean pipelines and scripts:
     - one based on p
     - one based on alpha
     - one on based variance/volatility
     - one based on the tangent portfolio
     - efficient frontier
-8. Perform back test vs market cap weighted, equal weighted, indexes
+10. Perform back test vs market cap weighted, equal weighted, indexes
     - sweep over set of alphas
     - compare short, no short.
     - plot
-9. Create notebooks
+11. Create notebooks
