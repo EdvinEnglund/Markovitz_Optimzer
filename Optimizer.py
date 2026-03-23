@@ -10,7 +10,7 @@ Inputs:
 """
 import numpy as np
 from scipy.optimize import minimize
-from Fetcher import set_tickers, get_stats
+from Fetcher import set_tickers, get_stats, set_target_return, set_target_volatility
 import math
 
 # Helper to cap expected return
@@ -20,62 +20,128 @@ def max_return(mu, L, short_allowed=True, short_cost = 0.0):
     else:
         return max(mu)
 
+def max_volatility(sigma, short_allowed=True, L=1.0):
+    vols = np.sqrt(np.diag(sigma))
+    if not short_allowed:
+        return np.max(vols)
+    # pick two most "extreme" assets
+    i = np.argmax(vols)
+    j = np.argmin(vols)
+
+    w = np.zeros(len(vols))
+    w[i] = L
+    w[j] = -(L - 1)
+    return np.sqrt(w @ sigma @ w)
+
 # Objective function: variance + shorting cost
-def objective(w, sigma, short_cost):
+def neg_return(w, mu, rf, short_cost = 0.0):
+    portfolio_return = np.dot(w, mu)
+    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
+    return - (portfolio_return - short_penalty - rf)
+
+def variance(w, sigma, rf, short_cost):
     variance = w.T @ sigma @ w
-    short_positions = np.abs(np.minimum(w, 0))
-    shorting_penalty = np.sum(short_positions) * short_cost
+    shorting_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
     return variance + shorting_penalty
 
-def get_weigths_by_p(mu, sigma, p=0.10, short_allowed=True, L = 1.00, short_cost=0.0):
+def neg_sharpe_ratio(w, mu, sigma, rf, short_cost):
+    portfolio_return = np.dot(w, mu)
+    portfolio_vol = np.sqrt(w @ sigma @ w)
+    # shorting cost
+    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
+    return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
-    #cap raturns
-    p = min(p, max_return(mu, L, short_allowed=short_allowed, short_cost=short_cost))
-
-    n = len(mu)
-
+def get_constraints_and_bounds(n, L, short_allowed=True):
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
-                   {"type": "eq", "fun": lambda w: np.dot(mu, w)
-                                                    # subtracting shorting cost for short positions
-                                                   - (np.sum(np.abs(np.minimum(w, 0))) * short_cost)
-                                                   - p},
                    {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
 
     if short_allowed:
         bounds = [(None, None)] * n
     else:
         bounds = [(0, None)] * n
+    return constraints, bounds
+
+def get_weights_by_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
+    #cap raturns
+    target = min(target, max_return(mu, L, short_allowed=short_allowed, short_cost=short_cost))
+    n = len(mu)
+    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+    # Add target constraint
+    constraints += [{
+        "type": "eq",
+        "fun": lambda w: (np.dot(mu, w)
+                - short_cost * np.sum(np.maximum(-w, 0))
+                - target)
+    }]
     #initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
-        objective,
+        variance,
         w0,
-        args=(sigma, short_cost),
+        args=(sigma, rf, short_cost),
         method = "SLSQP",
         bounds=bounds,
         constraints=constraints
     )
     w = res.x
+    ret = res.fun
     return w
-def set_expected_return():
-    try:
-        p = float(input("Choose expected return: "))
-    except ValueError:
-        print("Invalid input. Using default alpha = 0.1")
-        p = 0.1
-    if p < 0:
-        p = 0
-    print(f"Setting expected return to {p}")
-    return p
+
+def get_weights_by_volatility(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
+    # cap raturns
+    target = min(target, max_volatility(sigma, short_allowed, L))
+    n = len(mu)
+    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+    # Add target constraint
+    constraints += [{
+        "type": "eq",
+        "fun": lambda w: (w.T @ sigma @ w - target**2)
+    }]
+    # initial guess = equal weighting
+    w0 = np.ones(n) / n
+    res = minimize(
+        neg_return,
+        w0,
+        args=(mu, rf, short_cost),
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints
+    )
+    w = res.x
+    return w
+
+def get_tangent_portfolio(mu, sigma, rf = 0.02, short_allowed=True, L = 3.00, short_cost=0.0):
+    n = len(mu)
+    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+    # initial guess = equal weighting
+    w0 = np.ones(n) / n
+    res = minimize(
+        neg_sharpe_ratio,
+        w0,
+        args=(mu, sigma, rf, short_cost),
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints
+    )
+    w = res.x
+    return w
+
 
 if __name__ == "__main__":
+    rf = 0.02
+    short_allowed = True
+    short_cost = 0.05
+    L = 1.5
+
     #tickers = set_tickers()
     tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
-    valid_tickers, mu, sigma = get_stats(tickers, 5)
-    p = set_expected_return()
-    w = get_weigths_by_p(mu, sigma, p, short_allowed=True, L=3, short_cost=0.02)
+    valid_tickers, mu, sigma = get_stats(tickers, "2026-03-22", years = 5)
+    #target = set_target_volatility()
+    w = get_tangent_portfolio(mu, sigma, rf=rf, short_allowed=True, L=L, short_cost=short_cost)
+    ret = -neg_return(w, mu, rf, short_cost = short_cost)
     var =  w.T @ sigma @ w
-    print(f"Optimal weights for expected return {p}:")
+    #print(f"Optimal weights for expected return {target}:")
     for i, ticker in enumerate(valid_tickers):
         print(f"{ticker}: {w[i]*100:.2f}%")
     print(f"Volatility: {math.sqrt(var)*100:.2f}%")
+    print(f"Expected return: {ret*100:.2f}%")

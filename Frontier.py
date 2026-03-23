@@ -44,7 +44,6 @@ def get_weights_by_alpha(r, C, alpha, short_allowed = True, L = 1.0, short_cost 
         constraints=cons,
         bounds=bounds
     )
-
     return res.x
 
 def calculate_efficient_frontier(mu, sigma, L =1.0, short_cost = 0.0):

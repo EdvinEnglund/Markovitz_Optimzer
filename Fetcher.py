@@ -1,9 +1,10 @@
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import date
+today_str = date.today().strftime("%Y-%m-%d")
 
-def fetch_price_data(tickers, start="2025-01-01", end=None):
+def fetch_price_data(tickers, start="2010-01-01", end=None):
     data = yf.download(
         tickers,
         start=start,
@@ -16,33 +17,26 @@ def fetch_price_data(tickers, start="2025-01-01", end=None):
     price_data = price_data.dropna(axis=1, how="all")
     return price_data
 
-def compute_log_returns(price_df):
-    log_returns = np.log(price_df / price_df.shift(1))
-    return log_returns.dropna()
-
-def get_stats(tickers, years = 1):
+def get_stats(tickers, date=today_str, years = 1):
     """
-    Main pipeline function.
     Input:
         - tickers: list of tickers
-        - years: number of years to base mu and sigma on
+        - date: lasr day of period to base mu and sigma on
+        - years, no o years to base data on.
     Returns:
         - all valid tickers from input
         - expected returns
         - covariance matrix (numpy 2D array)
     """
-    # Compute start day
-    today_mmdd = datetime.today().strftime('%m-%d')
-    yyyy = datetime.today().strftime("%Y")
-    start = f"{int(yyyy) - years}-{today_mmdd}"
+    end_date = pd.to_datetime(date)
+    start_date = end_date - pd.DateOffset(years=years)
 
-    # Fetch price data from yfinance
-    price_data = fetch_price_data(tickers, start, None)
+    price_data = fetch_price_data(tickers, start_date, end_date)
 
-    # Get mu and Sigma
-    returns = compute_log_returns(price_data)
-    mu = (returns.mean() * 252).values
-    sigma = (returns.cov() * 252).values
+    log_returns = np.log(price_data / price_data.shift(1)).dropna()
+
+    mu = (log_returns.mean() * 252).values
+    sigma = (log_returns.cov() * 252).values
 
     valid_tickers = list(price_data.columns)
     return valid_tickers, mu, sigma
@@ -57,9 +51,31 @@ def set_tickers():
             break
     return tickers
 
+def set_target_return():
+    try:
+        p = float(input("Choose target return: "))
+    except ValueError:
+        print("Invalid input. Using default = 0.1")
+        p = 0.1
+    if p < 0:
+        p = 0
+    print(f"Setting expected return to {p}")
+    return p
+
+def set_target_volatility():
+    try:
+        p = float(input("Choose target volatility: "))
+    except ValueError:
+        print("Invalid input. Using default = 0.1")
+        p = 0.1
+    if p < 0:
+        p = 0
+    print(f"Setting expected volatility to {p}")
+    return p
+
 if __name__ == "__main__":
     tickers = set_tickers()
-    stats = get_stats(tickers, 5)
+    stats = get_stats(tickers, "2026-03-22")
     print(stats)
 
 
