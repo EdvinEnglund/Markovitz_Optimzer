@@ -9,9 +9,11 @@ Inputs:
 - L: max gross leverage
 """
 import numpy as np
+import pandas as pd
 from scipy.optimize import minimize
-from Fetcher import set_tickers, get_stats, set_target_return, set_target_volatility
+from Fetcher import set_tickers, get_stats, set_target_return, set_target_volatility, fetch_price_data
 import math
+from datetime import date
 
 # Helper to cap expected return
 def max_return(mu, L, short_allowed=True, short_cost = 0.0):
@@ -128,6 +130,7 @@ def get_tangent_portfolio(mu, sigma, rf = 0.02, short_allowed=True, L = 3.00, sh
 
 
 if __name__ == "__main__":
+    today_str = date.today().strftime("%Y-%m-%d")
     rf = 0.02
     short_allowed = True
     short_cost = 0.05
@@ -135,7 +138,13 @@ if __name__ == "__main__":
 
     #tickers = set_tickers()
     tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
-    valid_tickers, mu, sigma = get_stats(tickers, "2026-03-22", years = 5)
+
+    years = 1
+    end_date = pd.to_datetime(today_str)
+    start_date = end_date - pd.DateOffset(years=years)
+
+    price_df = fetch_price_data(tickers, start=start_date, end=end_date)
+    valid_tickers, mu, sigma = get_stats(price_df, "2026-03-22", years = 5)
     #target = set_target_volatility()
     w = get_tangent_portfolio(mu, sigma, rf=rf, short_allowed=True, L=L, short_cost=short_cost)
     ret = -neg_return(w, mu, rf, short_cost = short_cost)

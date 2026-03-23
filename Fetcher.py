@@ -2,7 +2,6 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import date
-today_str = date.today().strftime("%Y-%m-%d")
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
     data = yf.download(
@@ -15,12 +14,13 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     price_data = data.xs("Close", axis=1, level=0)
     # Drop columns with all NaN (invalid tickers)
     price_data = price_data.dropna(axis=1, how="all")
+    print("Price data info: ",price_data.info())
     return price_data
 
-def get_stats(tickers, date=today_str, years = 1):
+def get_stats(price_data, date="2026-03-22", years = 1):
     """
     Input:
-        - tickers: list of tickers
+        - Pandas DataFrame price_data
         - date: lasr day of period to base mu and sigma on
         - years, no o years to base data on.
     Returns:
@@ -30,8 +30,7 @@ def get_stats(tickers, date=today_str, years = 1):
     """
     end_date = pd.to_datetime(date)
     start_date = end_date - pd.DateOffset(years=years)
-
-    price_data = fetch_price_data(tickers, start_date, end_date)
+    price_data = price_data.loc[start_date:end_date]
 
     log_returns = np.log(price_data / price_data.shift(1)).dropna()
 
@@ -74,8 +73,15 @@ def set_target_volatility():
     return p
 
 if __name__ == "__main__":
+    today_str = date.today().strftime("%Y-%m-%d")
+    years = 1
+    end_date = pd.to_datetime(today_str)
+    start_date = end_date - pd.DateOffset(years=years)
     tickers = set_tickers()
-    stats = get_stats(tickers, "2026-03-22")
+    price_df = fetch_price_data(tickers, start=start_date, end=end_date)
+
+    stats = get_stats(price_df, "2026-03-22", years)
     print(stats)
+
 
 

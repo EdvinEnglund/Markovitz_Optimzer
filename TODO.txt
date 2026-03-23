@@ -1,24 +1,32 @@
-1. Create dirs:
+1. Clean and move frontier functions
+2. Create dirs:
     - src/
     - scripts/
     - data/
-    - results/
+    - media/
     - notebooks/
 
-1. Create clean pipelines and scripts:
-    - one based on p
+3. Create clean pipelines and scripts:
+    - one based on tangent portfolio
     - one on based variance/volatility
-    - one based on the tangent portfolio
-    - plot efficient frontier and cov matrix (Notebook)
+    - one on expected return
+    - one for efficient frontier
+    - one with input weights vs tangent portfolio (vs equal weights ?) -> stats
 
-2. Perform back test vs market cap weighted, equal weighted, indexes
+    - plot functions:
+        * Efficient frontier w. sharpe color gradient background, 3 different L values
+        * Covariance matrix colormap
+        * PCA w. tickers plotted
+
+5. Create Notebooks
+6. Perform back test vs market cap weighted, equal weighted, indexes
     - tangent portfolio
     - compare short, no short.
     - plot
 
-3. (Create alternative functions for expected return and covariance)
-4. (Adjust for dividends???)
-5. Add individual shortability and fee capability (Optional)
+7. (Create alternative functions for expected return and covariance)
+8. (Adjust for dividends???)
+9. Add individual shortability and fee capability (Optional)
     - Must be vectors, not scalar / boolean
     - Make shorting_fee np.full(short_cost, n)
     - Adjust only if unique fees
