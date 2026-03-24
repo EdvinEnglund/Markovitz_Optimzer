@@ -2,6 +2,8 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import date
+import json
+from pathlib import Path
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
     data = yf.download(
@@ -14,7 +16,6 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     price_data = data.xs("Close", axis=1, level=0)
     # Drop columns with all NaN (invalid tickers)
     price_data = price_data.dropna(axis=1, how="all")
-    print("Price data info: ",price_data.info())
     return price_data
 
 def get_stats(price_data, date="2026-03-22", years = 1):
@@ -40,15 +41,43 @@ def get_stats(price_data, date="2026-03-22", years = 1):
     valid_tickers = list(price_data.columns)
     return valid_tickers, mu, sigma
 
-def set_tickers():
+def set_tickers(default_list):
     tickers = []
+    print("Add tickers to list one by one")
+    print("Leave ticker list empty to use default list")
     while True:
-        ticker = input("Enter the ticker to fetch or press Enter to finish: ")
+        ticker = input("Add ticker to list or press Enter to finnish: ")
         if ticker != "":
             tickers.append(ticker)
         else:
             break
+    if len(tickers) == 0:
+        print("No tickers added, using default list")
+        tickers = default_list
     return tickers
+
+
+# Get tickers from default portfolio
+def get_tickers_from_json(filepath):
+    root = Path(__file__).resolve().parents[1]
+    file_path = root / filepath
+    with open(file_path, "r") as f:
+        data = json.load(f)
+    return list(data.keys())
+
+# Get weights from default portfolio
+def get_weights_from_json(filepath):
+    root = Path(__file__).resolve().parents[1]
+    file_path = root / filepath
+    with open(file_path, "r") as f:
+        data = json.load(f)
+    values = np.array(list(data.values()), dtype=float)
+    total = values.sum()
+    if total == 0:
+        raise ValueError("Cannot normalize: sum of values is 0")
+    normalized = values / total
+    return normalized
+
 
 def set_target_return():
     try:

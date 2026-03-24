@@ -1,13 +1,4 @@
-1. Clean and move frontier functions
-2. Create dirs:
-    - src/
-    - scripts/
-    - data/(example.json, benchmark_tickers.json, fetched_benchmark_data.csv etc)
-    - media/
-    - notebooks/
-    - config.py
-
-3. Create clean pipelines and scripts:
+1. Create clean pipelines and scripts:
     - one based on tangent portfolio
     - one on based variance/volatility
     - one on expected return
@@ -19,17 +10,19 @@
         * Covariance matrix colormap
         * PCA w. tickers plotted
 
-5. Create Notebooks
+1.5. When done w. above, clean all files from junk, clean imports etc.
 
-6. Perform back test tangent vs index vs equal weighted
+2. Create Notebooks
+
+3. Perform back test tangent vs index vs equal weighted
     - compare short, no short, different L.
     - plot total 5 linecharts/plot (3 L values for tangent + index + eq weight)
     - try different time periods for est return/cov
     - try different time horizons for benchmark
 
-7. (Create alternative functions for expected return and covariance)
-8. (Adjust for dividends???)
-9. Add individual shortability and fee capability (Optional)
+4. (Create alternative functions for expected return and covariance)
+5. (Adjust for dividends???)
+6. Add individual shortability and fee capability (Optional)
     - Must be vectors, not scalar / boolean
     - Make shorting_fee np.full(short_cost, n)
     - Adjust only if unique fees
