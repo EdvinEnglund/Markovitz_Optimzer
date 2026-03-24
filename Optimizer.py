@@ -43,8 +43,8 @@ def neg_return(w, mu, rf, short_cost = 0.0):
 
 def variance(w, sigma, rf, short_cost):
     variance = w.T @ sigma @ w
-    shorting_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
-    return variance + shorting_penalty
+    short_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
+    return variance + short_penalty
 
 def neg_sharpe_ratio(w, mu, sigma, rf, short_cost):
     portfolio_return = np.dot(w, mu)
