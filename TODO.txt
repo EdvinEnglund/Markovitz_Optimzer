@@ -1,7 +1,7 @@
 1. Create clean pipelines and scripts:
     - one based on tangent portfolio
-    - one on based variance/volatility
-    - one on expected return
+    - (one on based variance/volatility)
+    - (one on expected return)
     - one for efficient frontier
     - one with input weights (json) vs tangent portfolio (vs equal weights ?) -> stats
 

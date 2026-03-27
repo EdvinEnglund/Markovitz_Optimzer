@@ -1,11 +1,15 @@
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import date
 import json
 from pathlib import Path
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
+    """
+    Returns closing prices for list of tickers from yahoo finance in a pandas dataframe
+    Rows/Index: date YYYY-MM-DD
+    Columns: ticker closing price
+    """
     data = yf.download(
         tickers,
         start=start,
@@ -18,30 +22,36 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     price_data = price_data.dropna(axis=1, how="all")
     return price_data
 
-def get_stats(price_data, date="2026-03-22", years = 1):
+def get_log_returns(price_data, date="2026-03-22", years = 1):
     """
-    Input:
-        - Pandas DataFrame price_data
-        - date: lasr day of period to base mu and sigma on
-        - years, no o years to base data on.
-    Returns:
-        - all valid tickers from input
-        - expected returns
-        - covariance matrix (numpy 2D array)
+    Takes: Pandas DataFrame price_data with closing prices.
+    Crops by reference date and timescope in years
+    Returns: Pandas DataFrame price_data with log. daily returns
     """
     end_date = pd.to_datetime(date)
     start_date = end_date - pd.DateOffset(years=years)
     price_data = price_data.loc[start_date:end_date]
-
     log_returns = np.log(price_data / price_data.shift(1)).dropna()
+    return log_returns
 
-    mu = (log_returns.mean() * 252).values
-    sigma = (log_returns.cov() * 252).values
+def get_expected_returns(returns):
+    """
+    Estimates expected return for each ticker based on mean-log * 255 trading days
+    """
+    mu = (returns.mean() * 252).values
+    return mu
 
-    valid_tickers = list(price_data.columns)
-    return valid_tickers, mu, sigma
+def get_covariance_matrix(returns):
+    """
+    Returns covariance matrix of daily returns (i.e. log returns)
+    """
+    sigma = (returns.cov() * 252).values
+    return sigma
 
 def set_tickers(default_list):
+    """
+    Prompts  user to add tickers for analysis or use default portfolio
+    """
     tickers = []
     print("Add tickers to list one by one")
     print("Leave ticker list empty to use default list")
@@ -56,30 +66,28 @@ def set_tickers(default_list):
         tickers = default_list
     return tickers
 
-
-# Get tickers from default portfolio
-def get_tickers_from_json(filepath):
-    root = Path(__file__).resolve().parents[1]
-    file_path = root / filepath
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    return list(data.keys())
-
-# Get weights from default portfolio
-def get_weights_from_json(filepath):
+def get_default_portfolio(filepath):
+    """
+    Takes in filepath where portfolio is located
+    returns default portfolio dict with keys = ticker, value = weight
+    """
     root = Path(__file__).resolve().parents[1]
     file_path = root / filepath
     with open(file_path, "r") as f:
         data = json.load(f)
     values = np.array(list(data.values()), dtype=float)
     total = values.sum()
-    if total == 0:
-        raise ValueError("Cannot normalize: sum of values is 0")
-    normalized = values / total
-    return normalized
-
+    for ticker, weights in data.items():
+        if total != 0:
+            data[ticker] = data[ticker] / total
+        else:
+            data[ticker] = 1 / len(data)
+    return data
 
 def set_target_return():
+    """
+    Input function for optimizer based on target return
+    """
     try:
         p = float(input("Choose target return: "))
     except ValueError:
@@ -91,6 +99,9 @@ def set_target_return():
     return p
 
 def set_target_volatility():
+    """
+    Input function for optimizer based on target volatility
+    """
     try:
         p = float(input("Choose target volatility: "))
     except ValueError:
@@ -101,16 +112,7 @@ def set_target_volatility():
     print(f"Setting expected volatility to {p}")
     return p
 
-if __name__ == "__main__":
-    today_str = date.today().strftime("%Y-%m-%d")
-    years = 1
-    end_date = pd.to_datetime(today_str)
-    start_date = end_date - pd.DateOffset(years=years)
-    tickers = set_tickers()
-    price_df = fetch_price_data(tickers, start=start_date, end=end_date)
 
-    stats = get_stats(price_df, "2026-03-22", years)
-    print(stats)
 
 
 

@@ -1,35 +1,38 @@
-"""
-
-"""
 from scipy.optimize import minimize
-from src.Fetcher import *
 from src.Utilities import *
-import math
-from datetime import date
 
-# Objective functionss for neg return, variance and neg sharpe
 def neg_return(w, mu, rf, short_cost = 0.0):
+    """
+    Objective function for optimizer based on target volatility.
+    Returns negative of expected return from weight vector w and expected return vector mu.
+    Adjusts for interest rate and shorting costs.
+    """
     portfolio_return = np.dot(w, mu)
     short_penalty = short_cost * np.sum(np.maximum(-w, 0))
     return - (portfolio_return - short_penalty - rf)
 
-def variance(w, sigma, rf, short_cost):
+def variance(w, sigma, short_cost):
+    """
+    Objective function for optimizer based on target return
+    Returns variance of expected return from weight vector w and covariance matrix sigma
+    Adjusts optimizer for shorting costs.
+    """
     variance = w.T @ sigma @ w
     short_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
     return variance + short_penalty
 
 def neg_sharpe_ratio(w, mu, sigma, rf, short_cost):
+    """
+    Objective function for optimizer for tangent portfolio
+    Returns sharepe ratio of expected return from weight vector w, returns vector mu and covariance matrix sigma
+    """
     portfolio_return = np.dot(w, mu)
     portfolio_vol = np.sqrt(w @ sigma @ w)
     # shorting cost
     short_penalty = short_cost * np.sum(np.maximum(-w, 0))
     return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
-
-# Optimizers for above objective functions
-# By target return, target volatility and tangent portfolio
-
-def get_weights_by_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
+def get_weights_by_target_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
     L = assert_L(L)
     #cap raturns
     target = min(target, max_return(mu, L, short_allowed=short_allowed, short_cost=short_cost))
@@ -47,7 +50,7 @@ def get_weights_by_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, 
     res = minimize(
         variance,
         w0,
-        args=(sigma, rf, short_cost),
+        args=(sigma, short_cost),
         method = "SLSQP",
         bounds=bounds,
         constraints=constraints
@@ -55,7 +58,7 @@ def get_weights_by_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, 
     w = res.x
     return w
 
-def get_weights_by_volatility(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
+def get_weights_by_target_volatility(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
     L = assert_L(L)
     # cap raturns
     target = min(target, max_volatility(sigma, short_allowed, L))
@@ -95,29 +98,3 @@ def get_tangent_portfolio(mu, sigma, rf = 0.02, short_allowed=True, L = 3.00, sh
     )
     w = res.x
     return w
-
-if __name__ == "__main__":
-    today_str = date.today().strftime("%Y-%m-%d")
-    rf = 0.02
-    short_allowed = True
-    short_cost = 0.05
-    L = 1.5
-
-    #tickers = set_tickers()
-    tickers = ["AAPL", "GOOG", "AMZN", "MSFT", "CCJ", "NVDA", "uuuu", "glo.to"]
-
-    years = 1
-    end_date = pd.to_datetime(today_str)
-    start_date = end_date - pd.DateOffset(years=years)
-
-    price_df = fetch_price_data(tickers, start=start_date, end=end_date)
-    valid_tickers, mu, sigma = get_stats(price_df, "2026-03-22", years = 5)
-    #target = set_target_volatility()
-    w = get_tangent_portfolio(mu, sigma, rf=rf, short_allowed=True, L=L, short_cost=short_cost)
-    ret = -neg_return(w, mu, rf, short_cost = short_cost)
-    var =  w.T @ sigma @ w
-    #print(f"Optimal weights for expected return {target}:")
-    for i, ticker in enumerate(valid_tickers):
-        print(f"{ticker}: {w[i]*100:.2f}%")
-    print(f"Volatility: {math.sqrt(var)*100:.2f}%")
-    print(f"Expected return: {ret*100:.2f}%")
