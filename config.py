@@ -1,7 +1,7 @@
-l = 2.0
-rf = 0.02
-short_allowed = True
-years = 1
-short_cost = 0.0
+DEFAULT_L = 2.0
+RF = 0.02
+SHORT_ALLOWED = True
+YEARS = 1
+SHORT_COST = 0.0
 
-default_portfolio_path = "data/default_portfolio.json"
+DEFAULT_PORTFOLIO_PATH = "data/default_portfolio.json"
