@@ -85,32 +85,30 @@ def set_portfolio(default_portfolio_path):
             continue
         portfolio[ticker] = weight
     if len(portfolio) != 0:
-        save = input(f"Save portfolio to as default at {default_portfolio_path}? (y/n): ").strip().lower()
+        save = input(f"Do you want to save portfolio? (y/n): ").strip().lower()
         if save == "y":
-            save_default_portfolio(portfolio, default_portfolio_path)
+            save_portfolio(portfolio, default_portfolio_path)
     else:
         print(f"No portfolio added, using default portfolio at {default_portfolio_path}")
         portfolio = get_default_portfolio(default_portfolio_path)
     return portfolio
 
 def get_default_portfolio(default_portfolio_path):
-    """
-    Takes in filepath where portfolio is located
-    returns default portfolio dict with keys = ticker, value = weight
-    """
     root = Path(__file__).resolve().parents[1]
     file_path = root / default_portfolio_path
     with open(file_path, "r") as f:
         portfolio = json.load(f)
     return normalize_portfolio(portfolio)
 
-def save_default_portfolio(portfolio, default_portfolio_path):
+def save_portfolio(portfolio, default_portfolio_path):
+    name = input("Enter file name to save (without extension) or press Enter for default portfolio: ").strip()
+    file_name = f"{name}.json" if name != "" else default_portfolio_path
     root = Path(__file__).resolve().parents[1]
-    file_path = root / default_portfolio_path
+    save_path = root / "data" / file_name
     try:
-        with open(file_path, "w") as f:
+        with open(save_path, "w") as f:
             json.dump(normalize_portfolio(portfolio), f, indent=4)
-        print(f"Saved portfolio to {file_path}")
+        print(f"Saved portfolio to {save_path}")
     except Exception as e:
         print(f"Failed to save file: {e}")
     return
@@ -128,6 +126,10 @@ def normalize_portfolio(portfolio):
         else:
             portfolio[ticker] = 1 / len(portfolio)
     return portfolio
+
+def validate_portfolio(portfolio, valid_tickers):
+    valid_portfolio = {k: v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}
+    return valid_portfolio
 
 def set_target_return():
     """

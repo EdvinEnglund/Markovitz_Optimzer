@@ -1,3 +1,5 @@
+1. Make it possible to load other portfolio than default
+
 1. Create clean pipelines and scripts:
     - one based on tangent portfolio
     - (one on based variance/volatility)
