@@ -66,23 +66,68 @@ def set_tickers(default_list):
         tickers = default_list
     return tickers
 
-def get_default_portfolio(filepath):
+def set_portfolio(default_portfolio_path):
+    """
+    Prompts user to add ticker-weight pair for analysis or use default portfolio
+    """
+    print("ADD TICKER-WEIGHT PAIRS (ONE PAIR AT A TIME)")
+    print("LEAVE PORTFOLIO EMPTY TO USE DEFAULT PORTFOLIO")
+    portfolio = {}
+    while True:
+        ticker = input("Enter ticker or press Enter to finish portfolio building: ").strip()
+        if ticker == "":
+            break
+        weight = input("Enter weight or value of asset (number): ").strip()
+        try:
+            weight = float(weight)  # convert immediately
+        except ValueError:
+            print("Value must be a number. Ticker-weight pair NOT added.")
+            continue
+        portfolio[ticker] = weight
+    if len(portfolio) != 0:
+        save = input(f"Save portfolio to as default at {default_portfolio_path}? (y/n): ").strip().lower()
+        if save == "y":
+            save_default_portfolio(portfolio, default_portfolio_path)
+    else:
+        print(f"No portfolio added, using default portfolio at {default_portfolio_path}")
+        portfolio = get_default_portfolio(default_portfolio_path)
+    return portfolio
+
+def get_default_portfolio(default_portfolio_path):
     """
     Takes in filepath where portfolio is located
     returns default portfolio dict with keys = ticker, value = weight
     """
     root = Path(__file__).resolve().parents[1]
-    file_path = root / filepath
+    file_path = root / default_portfolio_path
     with open(file_path, "r") as f:
-        data = json.load(f)
-    values = np.array(list(data.values()), dtype=float)
+        portfolio = json.load(f)
+    return normalize_portfolio(portfolio)
+
+def save_default_portfolio(portfolio, default_portfolio_path):
+    root = Path(__file__).resolve().parents[1]
+    file_path = root / default_portfolio_path
+    try:
+        with open(file_path, "w") as f:
+            json.dump(normalize_portfolio(portfolio), f, indent=4)
+        print(f"Saved portfolio to {file_path}")
+    except Exception as e:
+        print(f"Failed to save file: {e}")
+    return
+
+def normalize_portfolio(portfolio):
+    # Helper to normalize portfolio weights
+    values = np.array(list(portfolio.values()), dtype=float)
     total = values.sum()
-    for ticker, weights in data.items():
+    if len(portfolio) == 0:
+        print("Warning: no portfolio to normalize")
+        return {}
+    for ticker, weights in portfolio.items():
         if total != 0:
-            data[ticker] = data[ticker] / total
+            portfolio[ticker] = portfolio[ticker] / total
         else:
-            data[ticker] = 1 / len(data)
-    return data
+            portfolio[ticker] = 1 / len(portfolio)
+    return portfolio
 
 def set_target_return():
     """

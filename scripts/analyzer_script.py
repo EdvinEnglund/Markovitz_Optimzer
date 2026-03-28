@@ -12,11 +12,16 @@ years = YEARS
 default_portfolio_path = DEFAULT_PORTFOLIO_PATH
 
 # LOAD DEFAULT PORTFOLIO
-default_list = list(get_default_portfolio(default_portfolio_path).keys())
-default_weights = list(get_default_portfolio(default_portfolio_path).values())
+default_portfolio = get_default_portfolio(default_portfolio_path)
+default_list = list(default_portfolio.keys())
+default_weights = list(default_portfolio.values())
 
 # PROMPT USER TO ADD TICKERS OR USE DEFAULT PORTFOLIO
-tickers = set_tickers(default_list)
+#tickers = set_tickers(default_list)
+
+portfolio = set_portfolio(default_portfolio_path)
+tickers = list(portfolio.keys())
+weights = list(portfolio.values())
 
 # USE TODAYS DATA FOR PRICE DATA
 today_str = date.today().strftime("%Y-%m-%d")
@@ -49,5 +54,5 @@ for i, ticker in enumerate(valid_tickers):
 print(f"Volatility: {math.sqrt(vol) * 100:.2f}%")
 print(f"Expected return: {ret * 100:.2f}%")
 print(f"Sharpe ratio: {sharpe:.3f}")
-print(f"Net leverage: {100*net_leverage:.2f}%")
+print(f"Gross leverage: {100*net_leverage:.2f}%")
 

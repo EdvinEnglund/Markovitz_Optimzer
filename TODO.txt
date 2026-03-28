@@ -6,7 +6,9 @@
     - one with input weights (json) vs tangent portfolio (vs equal weights ?) -> stats
 
     - plot functions:
-        * Efficient frontier w. sharpe color gradient background, 3 different L values
+        * Efficient frontier w. sharpe color gradient background
+            - Make it take and plot also default/user-portfolio X
+            - Make it save plot to /media
         * Covariance matrix colormap
         * PCA w. tickers plotted
 
