@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_frontier(frontier, optimal_p, default_p):
-    volatility = np.array([math.sqrt(v) for (v, _, _) in frontier])
-    returns = np.array([ret for (_, ret, _) in frontier])
-
+def plot_frontier(frontier, optimal_p, default_p, show = True, save = False):
+    volatility = np.array([v for (v, _) in frontier])
+    returns = np.array([ret for (_, ret) in frontier])
     # Values to crop plot
     min_x = min(0, min(optimal_p[0], default_p[0]))
     min_y = min(0, min(optimal_p[1], default_p[1]))
@@ -54,16 +53,21 @@ def plot_frontier(frontier, optimal_p, default_p):
     # Colorbar (Sharpe ratio index)
     cbar = plt.colorbar(contour)
     cbar.set_label("Sharpe Ratio")
+    if save:
+        save_fig(plt, file_name = "efficient_frontier")
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
-    # Save to media/
-    save = input("Do you want to save the frontier figure? (y/n): ")
-    if save == "y":
-        save_fig(plt, default_name = "efficient_frontier")
-    plt.show()
 
-def save_fig(fig, default_name):
-    name = input(f"Enter file name to save (without extension) or press Enter for {default_name}.png: ").strip()
-    file_name = name if name != "" else default_name
+def save_fig(fig, file_name):
     root = Path(__file__).resolve().parents[1]
-    save_path = root / "media" / f"{file_name}.png"
+    base_path = root / "media"
+    save_path = base_path / f"{file_name}.png"
+    counter = 1
+    while save_path.exists():
+        save_path = base_path / f"{file_name}_{counter}.png"
+        counter += 1
     fig.savefig(save_path)
+    return save_path

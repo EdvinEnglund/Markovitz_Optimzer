@@ -52,7 +52,8 @@ optimal_p = (
     optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Volatility"],
     optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Expected Return"]
 )
-Plotters.plot_frontier(frontier, optimal_p, default_p)
+save = input("Do you want to save the frontier figure? (y/n): ")
+Plotters.plot_frontier(frontier, optimal_p, default_p, save = save)
 
 
 

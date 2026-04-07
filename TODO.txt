@@ -1,11 +1,11 @@
-1. Clean up plotters and prompt in script whether or not to save pic
-2. Remove save call from create portfolio and prompt in script whether to save
-3. Make PCA and Covariance Heatmap
-4. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
-5. Make terminal app script to load and analyze (should maybe just call no. 9?)
-6. Make terminal app script to create and save
-7. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
-8. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
+0. Create function to generate random weighted portfolios and their stats
+1. Add support for benchmark and multiple random portfolios in plotter (use *args)
+2. Make PCA and Covariance Heatmap
+3. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
+4. Make terminal app script to load and analyze (should maybe just call no 7)
+5. Make terminal app script to create and save
+6. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
+7. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
 
 
 1. Create clean pipelines and scripts:

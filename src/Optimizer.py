@@ -1,5 +1,6 @@
 from scipy.optimize import minimize
 import numpy as np
+import math
 # LOAD CONFIG CONSTANTS
 from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L
 
@@ -193,9 +194,8 @@ def get_efficient_frontier(mu, sigma, short_allowed = True, L = 1.5, short_cost 
             short_cost = short_cost
         )
         res.append((
-            w.T @ sigma @ w,
+            math.sqrt(w.T @ sigma @ w),
             mu@w,
-            w
         ))
     return res
 
