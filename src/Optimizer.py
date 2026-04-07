@@ -1,7 +1,10 @@
 from scipy.optimize import minimize
 from src.Utilities import *
+# LOAD CONFIG CONSTANTS
+from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L
 
-def neg_return(w, mu, rf, short_cost = 0.0):
+
+def neg_return(w, mu, rf = RF, short_cost = SHORT_COST):
     """
     Objective function for optimizer based on target volatility.
     Returns negative of expected return from weight vector w and expected return vector mu.
@@ -11,7 +14,7 @@ def neg_return(w, mu, rf, short_cost = 0.0):
     short_penalty = short_cost * np.sum(np.maximum(-w, 0))
     return - (portfolio_return - short_penalty - rf)
 
-def variance(w, sigma, short_cost):
+def variance(w, sigma, short_cost = SHORT_COST):
     """
     Objective function for optimizer based on target return
     Returns variance of expected return from weight vector w and covariance matrix sigma
@@ -21,7 +24,7 @@ def variance(w, sigma, short_cost):
     short_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
     return variance + short_penalty
 
-def neg_sharpe_ratio(w, mu, sigma, rf, short_cost):
+def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
     """
     Objective function for optimizer for tangent portfolio
     Returns sharepe ratio of expected return from weight vector w, returns vector mu and covariance matrix sigma
@@ -32,12 +35,19 @@ def neg_sharpe_ratio(w, mu, sigma, rf, short_cost):
     short_penalty = short_cost * np.sum(np.maximum(-w, 0))
     return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
-def get_weights_by_target_return(mu, sigma, target=0.10, short_allowed=True, L = 3.00, rf = 0.02, short_cost=0.0):
-    L = assert_L(L)
+def get_weights_by_target_return(mu,
+                                 sigma,
+                                 target=0.10,
+                                 short_allowed = SHORT_ALLOWED,
+                                 L = DEFAULT_L,
+                                 rf = RF,
+                                 short_cost = SHORT_COST):
+    safe_L = assert_L(L)
+
     #cap raturns
-    target = min(target, max_return(mu, L, short_allowed=short_allowed, short_cost=short_cost))
+    target = min(target, max_return(mu, L = safe_L, short_allowed=short_allowed, short_cost=short_cost))
     n = len(mu)
-    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+    constraints, bounds = get_constraints_and_bounds(n, L = safe_L, short_allowed=short_allowed)
     # Add target constraint
     constraints += [{
         "type": "eq",
@@ -82,10 +92,10 @@ def get_weights_by_target_volatility(mu, sigma, target=0.10, short_allowed=True,
     w = res.x
     return w
 
-def get_tangent_portfolio(mu, sigma, rf = 0.02, short_allowed=True, L = 3.00, short_cost=0.0):
-    L = assert_L(L)
+def get_optimal_weights(mu, sigma, rf = RF, short_allowed = SHORT_ALLOWED, L = DEFAULT_L, short_cost = SHORT_COST):
+    safe_L = assert_L(L)
     n = len(mu)
-    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+    constraints, bounds = get_constraints_and_bounds(n, L = safe_L, short_allowed=short_allowed)
     # initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
@@ -98,3 +108,5 @@ def get_tangent_portfolio(mu, sigma, rf = 0.02, short_allowed=True, L = 3.00, sh
     )
     w = res.x
     return w
+
+

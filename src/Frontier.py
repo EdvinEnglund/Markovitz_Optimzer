@@ -7,7 +7,6 @@ returns plot of efficient frontier both in cases of shorting allowed / not allow
 """
 from src.Optimizer import *
 from src.Plotters import *
-from datetime import date
 import pandas as pd
 
 def F_alpha(w, mu, sigma, alpha, short_cost):

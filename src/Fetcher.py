@@ -2,14 +2,19 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import json
+from src import Utilities
 from pathlib import Path
+from config import YEARS, DEFAULT_PORTFOLIO_PATH
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
     """
-    Returns closing prices for list of tickers from yahoo finance in a pandas dataframe
+    Returns closing prices for portfolio or list of tickers from yahoo finance in a pandas dataframe
     Rows/Index: date YYYY-MM-DD
     Columns: ticker closing price
     """
+    if isinstance(tickers, dict):
+        tickers = list(tickers.keys())
+
     data = yf.download(
         tickers,
         start=start,
@@ -21,32 +26,6 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     # Drop columns with all NaN (invalid tickers)
     price_data = price_data.dropna(axis=1, how="all")
     return price_data
-
-def get_log_returns(price_data, date="2026-03-22", years = 1):
-    """
-    Takes: Pandas DataFrame price_data with closing prices.
-    Crops by reference date and timescope in years
-    Returns: Pandas DataFrame price_data with log. daily returns
-    """
-    end_date = pd.to_datetime(date)
-    start_date = end_date - pd.DateOffset(years=years)
-    price_data = price_data.loc[start_date:end_date]
-    log_returns = np.log(price_data / price_data.shift(1)).dropna()
-    return log_returns
-
-def get_expected_returns(returns):
-    """
-    Estimates expected return for each ticker based on mean-log * 255 trading days
-    """
-    mu = (returns.mean() * 252).values
-    return mu
-
-def get_covariance_matrix(returns):
-    """
-    Returns covariance matrix of daily returns (i.e. log returns)
-    """
-    sigma = (returns.cov() * 252).values
-    return sigma
 
 def set_tickers(default_list):
     """
@@ -66,10 +45,7 @@ def set_tickers(default_list):
         tickers = default_list
     return tickers
 
-def set_portfolio(default_portfolio_path):
-    """
-    Prompts user to add ticker-weight pair for analysis or use default portfolio
-    """
+def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH):
     print("ADD TICKER-WEIGHT PAIRS (ONE PAIR AT A TIME)")
     print("LEAVE PORTFOLIO EMPTY TO USE DEFAULT PORTFOLIO")
     portfolio = {}
@@ -87,49 +63,43 @@ def set_portfolio(default_portfolio_path):
     if len(portfolio) != 0:
         save = input(f"Do you want to save portfolio? (y/n): ").strip().lower()
         if save == "y":
-            save_portfolio(portfolio, default_portfolio_path)
+            save_portfolio(portfolio)
     else:
         print(f"No portfolio added, using default portfolio at {default_portfolio_path}")
-        portfolio = get_default_portfolio(default_portfolio_path)
+        portfolio = get_portfolio(default_portfolio_path)
     return portfolio
 
-def get_default_portfolio(default_portfolio_path):
+"""
+def get_portfolio(default_portfolio_path):
     root = Path(__file__).resolve().parents[1]
     file_path = root / default_portfolio_path
     with open(file_path, "r") as f:
         portfolio = json.load(f)
     return normalize_portfolio(portfolio)
+"""
 
-def save_portfolio(portfolio, default_portfolio_path):
-    name = input("Enter file name to save (without extension) or press Enter for default portfolio: ").strip()
-    file_name = f"{name}.json" if name != "" else default_portfolio_path
+
+def get_portfolio(path = DEFAULT_PORTFOLIO_PATH):
+    root = Path(__file__).resolve().parents[1]
+    file_path = root / path
+    with open(file_path, "r") as f:
+        portfolio = json.load(f)
+    return Utilities.normalize_portfolio(portfolio)
+
+def save_portfolio(portfolio, path = DEFAULT_PORTFOLIO_PATH):
+    name = input("Enter file name to as json in ../data (or press Enter to save as default portfolio): ").strip()
+    file_name = f"{name}.json" if name != "" else path
     root = Path(__file__).resolve().parents[1]
     save_path = root / "data" / file_name
     try:
         with open(save_path, "w") as f:
-            json.dump(normalize_portfolio(portfolio), f, indent=4)
+            json.dump(Utilities.normalize_portfolio(portfolio), f, indent=4)
         print(f"Saved portfolio to {save_path}")
     except Exception as e:
         print(f"Failed to save file: {e}")
     return
 
-def normalize_portfolio(portfolio):
-    # Helper to normalize portfolio weights
-    values = np.array(list(portfolio.values()), dtype=float)
-    total = values.sum()
-    if len(portfolio) == 0:
-        print("Warning: no portfolio to normalize")
-        return {}
-    for ticker, weights in portfolio.items():
-        if total != 0:
-            portfolio[ticker] = portfolio[ticker] / total
-        else:
-            portfolio[ticker] = 1 / len(portfolio)
-    return portfolio
 
-def validate_portfolio(portfolio, valid_tickers):
-    valid_portfolio = {k: v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}
-    return valid_portfolio
 
 def set_target_return():
     """
