@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-from config import SHORT_ALLOWED, SHORT_COST, DEFAULT_L, YEARS
+import math
+from src import Optimizer
+from config import YEARS, RF
 
 def get_log_returns(price_data, date="2026-03-22", years = YEARS):
     """
@@ -17,7 +19,6 @@ def get_log_returns(price_data, date="2026-03-22", years = YEARS):
 def get_expected_returns(returns):
     """
     Takes: Pandas DataFrame price_data with daily log returns.
-    Returns: np.Array of expected yearly returns
     """
     mu = (returns.mean() * 252).values
     return mu
@@ -25,7 +26,6 @@ def get_expected_returns(returns):
 def get_covariance_matrix(returns):
     """
     Takes: Pandas DataFrame price_data with daily log returns.
-    Returns: np.2DArray covariance matrix of daily returns (i.e. log returns)
     """
     sigma = (returns.cov() * 252).values
     return sigma
@@ -44,55 +44,71 @@ def normalize_portfolio(portfolio):
             portfolio[ticker] = 1 / len(portfolio)
     return portfolio
 
-def get_tangent_portfolio(valid_tickers, weights):
+def get_tangent_portfolio(returns_df):
+    mu = get_expected_returns(returns_df)
+    sigma = get_covariance_matrix(returns_df)
+    weights = Optimizer.get_optimal_weights(mu, sigma)
     portfolio = {}
+    valid_tickers = list(returns_df.columns)
     for i, ticker in enumerate(valid_tickers):
         portfolio[ticker] = weights[i]
     return normalize_portfolio(portfolio)
 
 def validate_portfolio(portfolio, valid_tickers):
-    valid_portfolio = {k: v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}
+    valid_portfolio = {k.upper(): v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}
     return normalize_portfolio(valid_portfolio)
 
-# Helper to assert valid L
-def assert_L(L):
-    # L < 1 makes no sense
-    if L < 1:
-        L = 1
-    if L == 1.0:
-        # L = 1.0 breaks optimizer logic, increment float
-        # ugly fix but works best
-        L += 0.0001
-    return L
+# argument portfolio must match daily return data
+def get_portfolio_stats(portfolio, returns_df, rf = RF, ndigits=4):
+    mu = get_expected_returns(returns_df)
+    sigma = get_covariance_matrix(returns_df)
+    weights = np.array(list(portfolio.values()))
+    # adds rf because neg_return function subtracts it
+    expected_return = -Optimizer.neg_return(weights, mu) + rf
+    volatility = math.sqrt(weights.T @ sigma @ weights)
+    sharpe = -Optimizer.neg_sharpe_ratio(weights, mu, sigma)
+    gross_leverage = np.sum(np.abs(weights))
 
-# Helper to cap max return
-def max_return(mu, L = DEFAULT_L, short_allowed = SHORT_ALLOWED, short_cost = SHORT_COST):
-    if short_allowed:
-        return L * max(mu) + (L - 1) * min(mu) - short_cost  # approximate max return w. shorting
-    else:
-        return max(mu)
+    # --- Portfolio row ---
+    portfolio_row = pd.DataFrame([{
+        "Expected Return": round(expected_return, ndigits),
+        "Volatility": round(volatility, ndigits),
+        "Sharpe Ratio": round(sharpe, ndigits),
+        "Weight": 1.0,
+        "Gross Leverage": round(gross_leverage, ndigits)
+    }], index=["Portfolio"])
 
-# Helper to cap volatility
-def max_volatility(sigma, short_allowed = SHORT_ALLOWED, L = DEFAULT_L):
-    vols = np.sqrt(np.diag(sigma))
-    if not short_allowed:
-        return np.max(vols)
-    # pick two most "extreme" assets
-    i = np.argmax(vols)
-    j = np.argmin(vols)
+    # Put portfolio first
+    return portfolio_row
 
-    w = np.zeros(len(vols))
-    w[i] = L
-    w[j] = -(L - 1)
-    return np.sqrt(w @ sigma @ w)
+def get_tickers_stats(portfolio, returns_df, rf = RF, ndigits=4):
+    # --- Individual assets ---
+    tickers = list(portfolio.keys())
+    weights = list(portfolio.values())
+    mu = get_expected_returns(returns_df)
+    sigma = get_covariance_matrix(returns_df)
 
-# Get constraints and bounds common for all optimizers
-def get_constraints_and_bounds(n, L = DEFAULT_L, short_allowed = SHORT_ALLOWED):
-    constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
-                   {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
+    data = []
+    for i, ticker in enumerate(tickers):
+        asset_return = mu[i]
+        asset_vol = math.sqrt(sigma[i,i])
+        asset_sharpe = (asset_return - rf) / asset_vol
 
-    if short_allowed:
-        bounds = [(None, None)] * n
-    else:
-        bounds = [(0, None)] * n
-    return constraints, bounds
+        data.append({
+            "Ticker": ticker,
+            "Expected Return": round(asset_return, ndigits),
+            "Volatility": round(asset_vol, ndigits),
+            "Sharpe Ratio": round(asset_sharpe, ndigits),
+            "Weight": round(weights[i], ndigits),
+            "Gross Leverage": None,
+        })
+    df = pd.DataFrame(data).set_index("Ticker")
+    return df
+
+def get_stats(portfolio, returns_df, rf = RF, ndigits=4):
+    portfolio_row = get_portfolio_stats(portfolio, returns_df, rf, ndigits)
+    tickers_stats = get_tickers_stats(portfolio, returns_df, rf, ndigits)
+    # Put portfolio first
+    df = pd.concat([portfolio_row, tickers_stats])
+    return df
+

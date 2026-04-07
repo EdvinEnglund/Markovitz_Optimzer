@@ -1,9 +1,53 @@
 from scipy.optimize import minimize
-from src.Utilities import *
+import numpy as np
 # LOAD CONFIG CONSTANTS
 from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L
 
+# --- HELPERS ---
+# Helper to assert valid L
+def assert_L(L):
+    # L < 1 makes no sense
+    if L < 1:
+        L = 1
+    if L == 1.0:
+        # L = 1.0 breaks optimizer logic, increment float
+        # ugly fix but works best
+        L += 0.0001
+    return L
 
+# Helper to cap max return
+def max_return(mu, L = DEFAULT_L, short_allowed = SHORT_ALLOWED, short_cost = SHORT_COST):
+    if short_allowed:
+        return L * max(mu) + (L - 1) * min(mu) - short_cost  # approximate max return w. shorting
+    else:
+        return max(mu)
+
+# Helper to cap volatility
+def max_volatility(sigma, short_allowed = SHORT_ALLOWED, L = DEFAULT_L):
+    vols = np.sqrt(np.diag(sigma))
+    if not short_allowed:
+        return np.max(vols)
+    # pick two most "extreme" assets
+    i = np.argmax(vols)
+    j = np.argmin(vols)
+
+    w = np.zeros(len(vols))
+    w[i] = L
+    w[j] = -(L - 1)
+    return np.sqrt(w @ sigma @ w)
+
+# Get constraints and bounds common for all optimizers
+def get_constraints_and_bounds(n, L = DEFAULT_L, short_allowed = SHORT_ALLOWED):
+    constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1},
+                   {"type": "ineq", "fun": lambda w: L - np.sum(np.abs(w))}]
+
+    if short_allowed:
+        bounds = [(None, None)] * n
+    else:
+        bounds = [(0, None)] * n
+    return constraints, bounds
+
+# --- OBJECTIVE FUNCTIONS FOR OPTIMIZERS ---
 def neg_return(w, mu, rf = RF, short_cost = SHORT_COST):
     """
     Objective function for optimizer based on target volatility.
@@ -35,6 +79,14 @@ def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
     short_penalty = short_cost * np.sum(np.maximum(-w, 0))
     return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
+# Objective function for alpha, adjust for shorting cost
+def F_alpha(w, mu, sigma, alpha, short_cost):
+    fa = alpha * (w.T @ sigma @ w) - (1.0 - alpha) * (mu @ w)
+    short_positions = np.abs(np.minimum(w, 0))
+    short_penalty = np.sum(short_positions) * short_cost
+    return fa + short_penalty
+
+# --- OPTIMIZERS ---
 def get_weights_by_target_return(mu,
                                  sigma,
                                  target=0.10,
@@ -108,5 +160,43 @@ def get_optimal_weights(mu, sigma, rf = RF, short_allowed = SHORT_ALLOWED, L = D
     )
     w = res.x
     return w
+
+def get_weights_by_alpha(mu, sigma, alpha, short_allowed = True, L = 1.5, short_cost = 0.0):
+    L = assert_L(L)
+
+    n = len(mu)
+
+    constraints, bounds = get_constraints_and_bounds(n, L, short_allowed=short_allowed)
+
+    w0 = np.ones(n) / n
+
+    res = minimize(
+        F_alpha,
+        w0,
+        args = (mu, sigma, alpha, short_cost),
+        method='SLSQP',
+        constraints=constraints,
+        bounds=bounds
+    )
+    return res.x
+
+def get_efficient_frontier(mu, sigma, short_allowed = True, L = 1.5, short_cost = 0.0):
+    res = []
+    alphas = np.arange(0.05, 1.01, 0.05)
+    for alpha in alphas:
+        w = get_weights_by_alpha(
+            mu,
+            sigma,
+            alpha,
+            short_allowed = short_allowed,
+            L = L,
+            short_cost = short_cost
+        )
+        res.append((
+            w.T @ sigma @ w,
+            mu@w,
+            w
+        ))
+    return res
 
 

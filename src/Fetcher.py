@@ -4,7 +4,7 @@ import numpy as np
 import json
 from src import Utilities
 from pathlib import Path
-from config import YEARS, DEFAULT_PORTFOLIO_PATH
+from config import DEFAULT_PORTFOLIO_PATH
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
     """

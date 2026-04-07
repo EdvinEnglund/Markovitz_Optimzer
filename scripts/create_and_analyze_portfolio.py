@@ -2,13 +2,9 @@ from src import Fetcher
 from src import Optimizer
 from src import Utilities
 from src import Plotters
-from src import Frontier
 from datetime import date
 import pandas as pd
-import numpy as np
-import math
-from config import YEARS, RF
-from src.Utilities import validate_portfolio
+from config import YEARS
 
 my_portfolio = Fetcher.create_portfolio()
 tickers = my_portfolio.keys()
@@ -26,44 +22,30 @@ sigma = Utilities.get_covariance_matrix(log_returns)
 
 valid_tickers = list(price_df.columns)
 
-### CREATE FUNCTION GET PORTFOLIO STATS FOR BLOCKS BELOW THAT RETURNS/DISPLAYS PD DF
-valid_portfolio = validate_portfolio(my_portfolio, valid_tickers)
-portfolio_weights = np.array(list(valid_portfolio.values()))
-portfolio_expected_return = -Optimizer.neg_return(portfolio_weights, mu) + RF #adds rf because neg_return function subtracts it
-portfolio_volatility = math.sqrt(portfolio_weights.T @ sigma @ portfolio_weights)
-portfolio_sharpe = -Optimizer.neg_sharpe_ratio(portfolio_weights, mu, sigma)
-portfolio_gross_leverage = np.sum(np.abs(portfolio_weights))
+valid_portfolio = Utilities.validate_portfolio(my_portfolio, valid_tickers)
+my_portfolio_stats = Utilities.get_stats(valid_portfolio, log_returns)
 
-optimal_weights = Optimizer.get_optimal_weights(mu, sigma)
-optimal_portfolio = Utilities.get_tangent_portfolio(valid_tickers, optimal_weights)
-optimal_expected_return = -Optimizer.neg_return(optimal_weights, mu) + RF
-optimal_volatility = math.sqrt(optimal_weights.T @ sigma @ optimal_weights)
-optimal_sharpe = -Optimizer.neg_sharpe_ratio(optimal_weights, mu, sigma)
-opt_gross_leverage = np.sum(np.abs(optimal_weights))
+optimal_portfolio = Utilities.get_tangent_portfolio(log_returns)
+optimal_portfolio_stats = Utilities.get_stats(optimal_portfolio, log_returns)
 
-# DEAFAULT/INPUT PORTFOLIO
-print("### Your portfolio: ###")
-for i, ticker in enumerate(valid_tickers):
-    print(f"{ticker}: {portfolio_weights[i] * 100:.2f}%")
-print(f"Volatility: {portfolio_volatility * 100:.2f}%")
-print(f"Expected return: {portfolio_expected_return * 100:.2f}%")
-print(f"Sharpe ratio: {portfolio_sharpe:.3f}")
-print(f"Gross leverage: {100*portfolio_gross_leverage:.2f}%")
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_columns', None)
 
-# PRINT RESULTS OF ANALYSIS
-# TANGENT PORTFOLIO:
-print("### Tangent portfolio: ###")
-for i, ticker in enumerate(valid_tickers):
-    print(f"{ticker}: {optimal_weights[i] * 100:.2f}%")
-print(f"Volatility: {optimal_volatility * 100:.2f}%")
-print(f"Expected return: {optimal_expected_return * 100:.2f}%")
-print(f"Sharpe ratio: {optimal_sharpe:.3f}")
-print(f"Gross leverage: {100*opt_gross_leverage:.2f}%")
+print("Your portfolio stats:")
+print(my_portfolio_stats)
+print("Optimal portfolio stats:")
+print(optimal_portfolio_stats)
 
 # CREATE AND DISPLAY EFFICIENT FRONTIER
-frontier = Frontier.get_efficient_frontier(mu, sigma)
-default_p = (portfolio_volatility, portfolio_expected_return)
-optimal_p = (optimal_volatility, optimal_expected_return)
+frontier = Optimizer.get_efficient_frontier(mu, sigma)
+default_p = (
+    my_portfolio_stats.at[my_portfolio_stats.index[0], "Volatility"],
+    my_portfolio_stats.at[my_portfolio_stats.index[0], "Expected Return"]
+)
+optimal_p = (
+    optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Volatility"],
+    optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Expected Return"]
+)
 Plotters.plot_frontier(frontier, optimal_p, default_p)
 
 

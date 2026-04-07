@@ -1,13 +1,12 @@
 0. prompt in create_and_analyze to save portfolio
 1. Clean up plotters and prompt in script whether or not to save pic
 2. Remove save call from create portfolio and prompt in script whether to save
-3. Make function get_portfolio_stats to show portfolio stats
-4. Make PCA and Covariance Heatmap
-5. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
-6. Make terminal app script to load and analyze (should maybe just call no. 9?)
-7. Make terminal app script to create and save
-8. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
-9. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
+3. Make PCA and Covariance Heatmap
+4. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
+5. Make terminal app script to load and analyze (should maybe just call no. 9?)
+6. Make terminal app script to create and save
+7. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
+8. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
 
 
 1. Create clean pipelines and scripts:
