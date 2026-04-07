@@ -1,6 +1,4 @@
 import yfinance as yf
-import pandas as pd
-import numpy as np
 import json
 from src import Utilities
 from pathlib import Path
@@ -28,9 +26,6 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     return price_data
 
 def set_tickers(default_list):
-    """
-    Prompts  user to add tickers for analysis or use default portfolio
-    """
     tickers = []
     print("Add tickers to list one by one")
     print("Leave ticker list empty to use default list")
@@ -60,13 +55,10 @@ def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH):
             print("Value must be a number. Ticker-weight pair NOT added.")
             continue
         portfolio[ticker] = weight
-    if len(portfolio) != 0:
-        save = input(f"Do you want to save portfolio? (y/n): ").strip().lower()
-        if save == "y":
-            save_portfolio(portfolio)
-    else:
-        print(f"No portfolio added, using default portfolio at {default_portfolio_path}")
-        portfolio = get_portfolio(default_portfolio_path)
+
+    if len(portfolio) == 0:
+        print(f"No portfolio created, using default portfolio at {default_portfolio_path}")
+        portfolio = get_portfolio(DEFAULT_PORTFOLIO_PATH)
     return portfolio
 
 """
@@ -86,11 +78,11 @@ def get_portfolio(path = DEFAULT_PORTFOLIO_PATH):
         portfolio = json.load(f)
     return Utilities.normalize_portfolio(portfolio)
 
-def save_portfolio(portfolio, path = DEFAULT_PORTFOLIO_PATH):
-    name = input("Enter file name to as json in ../data (or press Enter to save as default portfolio): ").strip()
-    file_name = f"{name}.json" if name != "" else path
+def save_portfolio(portfolio, path , default_path = DEFAULT_PORTFOLIO_PATH):
+    if path == "":
+        path = default_path
     root = Path(__file__).resolve().parents[1]
-    save_path = root / "data" / file_name
+    save_path = root / path
     try:
         with open(save_path, "w") as f:
             json.dump(Utilities.normalize_portfolio(portfolio), f, indent=4)
