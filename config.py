@@ -4,7 +4,7 @@ SHORT_ALLOWED = True
 YEARS = 1
 SHORT_COST = 0.05
 # Caps efficient frontier at desired unrealistic returns
-RETURN_CAP = 3
-NO_O_RANDOM_POINTS = 100
+RETURN_CAP = 2
+NO_O_RANDOM_POINTS = 300
 
 DEFAULT_PORTFOLIO_PATH = "data/default_portfolio.json"

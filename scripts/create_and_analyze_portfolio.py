@@ -58,7 +58,7 @@ optimal_p = (
     optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Expected Return"]
 )
 save = input("Do you want to save figures? (y/n): ") == "y"
-Plotters.plot_frontier(frontier, optimal_p, default_p, save = save, random_points=random_points)
+Plotters.plot_frontier(frontier, optimal_p, default_p, save = save ,random_points=random_points)
 Plotters.plot_heatmap(valid_tickers, sigma, save = save)
 Plotters.plot_PCA(log_returns, save = save)
 

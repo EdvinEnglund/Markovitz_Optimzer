@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from src import Optimizer
 import random
-from config import YEARS, RF, NO_O_RANDOM_POINTS
+from config import YEARS, RF, NO_O_RANDOM_POINTS, SHORT_COST
 
 
 def get_log_returns(price_data, date="2026-03-22", years = YEARS):
@@ -60,11 +60,11 @@ def randomize_portfolio(portfolio):
     port = {}
     if isinstance(portfolio, dict):
         for ticker, weights in portfolio.items():
-            port[ticker] = random.random()*2 -1
+            port[ticker] = random.random() - 0.5
     else:
         for ticker in portfolio:
-            port[ticker] = random.random()*2 -1
-    return port
+            port[ticker] = random.random() - 0.5
+    return normalize_portfolio(port)
 
 def get_randomized_portfolios(portfolio, returns_df, n = NO_O_RANDOM_POINTS):
     random_vol_ret_points = []
