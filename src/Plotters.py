@@ -1,11 +1,8 @@
-import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-
-from src import Utilities
-
+from sklearn.decomposition import PCA
 
 def plot_frontier(frontier, optimal_p, default_p, show = True, save = False):
     volatility = np.array([v for (v, _) in frontier])
@@ -83,8 +80,12 @@ def plot_heatmap(portfolio, sigma, show=True, save=False):
 
     # Plot covariance heatmap
     fig, ax = plt.subplots()
+    cax = ax.imshow(cov_df, interpolation='nearest')
+
+    """
     max_abs = np.max(np.abs(sigma))
     cax = ax.imshow(cov_df, interpolation='nearest', vmin=-max_abs, vmax=max_abs)
+    """
 
     ax.set_xticks(range(len(portfolio)))
     ax.set_yticks(range(len(portfolio)))
@@ -95,12 +96,46 @@ def plot_heatmap(portfolio, sigma, show=True, save=False):
     ax.set_title("Covariance Heatmap", pad=15)
 
     if save:
-        plt.savefig("covariance_heatmap.png", bbox_inches="tight")
+        save_fig(fig, "covariance_heatmap")
 
     if show:
         plt.show()
     else:
         plt.close()
+
+def plot_PCA(returns_df, save = False, show = True):
+    # Perform PCA
+    pca = PCA(n_components=2)
+    pca_result = pca.fit_transform(returns_df.T)  # Transpose: tickers as samples
+
+    explained_var = pca.explained_variance_ratio_ * 100  # in percentage
+
+    fig, ax = plt.subplots()
+
+    # Scatter plot
+    ax.scatter(pca_result[:, 0], pca_result[:, 1], color='blue')
+
+    # Annotate points with ticker names
+    for i, ticker in enumerate(returns_df.columns):
+        ax.text(pca_result[i, 0] + 0.002, pca_result[i, 1] + 0.002, ticker, fontsize=9)
+
+    # Labels including explained variance
+    ax.set_xlabel(f"PC1 ({explained_var[0]:.2f}% explained variance)")
+    ax.set_ylabel(f"PC2 ({explained_var[1]:.2f}% explained variance)")
+    ax.set_title("PCA of daily log returns")
+
+    ax.grid(True)
+    plt.tight_layout()
+
+    if save:
+        save_fig(fig, "pca")
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+
+    return fig
 
 def save_fig(fig, file_name):
     root = Path(__file__).resolve().parents[1]

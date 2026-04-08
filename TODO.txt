@@ -1,6 +1,6 @@
 0. Create function to generate random weighted portfolios and their stats
 1. Add support for benchmark and multiple random portfolios in plotter (use *args)
-2. Make PCA and Covariance Heatmap
+2. Make PCA
 3. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
 4. Make terminal app script to load and analyze (should maybe just call no 7)
 5. Make terminal app script to create and save
