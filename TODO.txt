@@ -1,11 +1,10 @@
 0. Create function to generate random weighted portfolios and their stats
 1. Add support for benchmark and multiple random portfolios in plotter (use *args)
-2. Make PCA
-3. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
-4. Make terminal app script to load and analyze (should maybe just call no 7)
-5. Make terminal app script to create and save
-6. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
-7. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
+2. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
+3. Make terminal app script to load and analyze (should maybe just call no 7)
+4. Make terminal app script to create and save
+5. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
+6. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
 
 1. Create clean pipelines and scripts:
     - one based on tangent portfolio
