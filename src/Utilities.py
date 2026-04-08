@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import math
 from src import Optimizer
-from config import YEARS, RF
+import random
+from config import YEARS, RF, NO_O_RANDOM_POINTS
+
 
 def get_log_returns(price_data, date="2026-03-22", years = YEARS):
     """
@@ -53,6 +55,44 @@ def get_tangent_portfolio(returns_df):
     for i, ticker in enumerate(valid_tickers):
         portfolio[ticker] = weights[i]
     return normalize_portfolio(portfolio)
+
+def randomize_portfolio(portfolio):
+    port = {}
+    if isinstance(portfolio, dict):
+        for ticker, weights in portfolio.items():
+            port[ticker] = random.random()*2 -1
+    else:
+        for ticker in portfolio:
+            port[ticker] = random.random()*2 -1
+    return port
+
+def get_randomized_portfolios(portfolio, returns_df, n = NO_O_RANDOM_POINTS):
+    random_vol_ret_points = []
+    for _ in range(n):
+        portfolio = randomize_portfolio(portfolio)
+        stats = get_portfolio_stats(portfolio, returns_df)
+        ret = stats.iloc[0]["Expected Return"]
+        vol = stats.iloc[0]["Volatility"]
+        point = (vol, ret)
+        random_vol_ret_points.append(point)
+    return random_vol_ret_points
+
+def get_mean_random_portfolio_stats(points, ndigits = 4):
+    n = len(points)
+    mean_vol = sum(vol for (vol, ret) in points) / n
+    mean_ret = sum(ret for (vol, ret) in points) / n
+    mean_sharpe = sum(ret / vol for (vol, ret) in points) / n
+
+    # --- Portfolio row ---
+    row = pd.DataFrame([{
+        "Expected Return": round(mean_ret, ndigits),
+        "Volatility": round(mean_vol, ndigits),
+        "Sharpe Ratio": round(mean_sharpe, ndigits),
+        "Weight": 1.0,
+        "Gross Leverage": None
+    }], index=["Portfolio"])
+    return row
+
 
 def validate_portfolio(portfolio, valid_tickers):
     valid_portfolio = {k.upper(): v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}

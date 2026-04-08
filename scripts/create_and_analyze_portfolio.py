@@ -42,6 +42,11 @@ print(my_portfolio_stats)
 print("Optimal portfolio stats:")
 print(optimal_portfolio_stats)
 
+random_points = Utilities.get_randomized_portfolios(my_portfolio, log_returns)
+random_portfolio_stats = Utilities.get_mean_random_portfolio_stats(random_points)
+print("Mean of random portfolio stats:")
+print(random_portfolio_stats)
+
 # CREATE AND DISPLAY EFFICIENT FRONTIER
 frontier = Optimizer.get_efficient_frontier(mu, sigma)
 default_p = (
@@ -52,11 +57,8 @@ optimal_p = (
     optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Volatility"],
     optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Expected Return"]
 )
-save = input("Do you want to save figures? (y/n): ")
-Plotters.plot_frontier(frontier, optimal_p, default_p, save = save)
+save = input("Do you want to save figures? (y/n): ") == "y"
+Plotters.plot_frontier(frontier, optimal_p, default_p, save = save, random_points=random_points)
 Plotters.plot_heatmap(valid_tickers, sigma, save = save)
 Plotters.plot_PCA(log_returns, save = save)
-
-
-
 

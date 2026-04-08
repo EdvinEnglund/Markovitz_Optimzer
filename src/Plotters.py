@@ -4,16 +4,20 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.decomposition import PCA
 
-def plot_frontier(frontier, optimal_p, default_p, show = True, save = False):
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_frontier(frontier, optimal_p, default_p, show=True, save=False, random_points=None):
     volatility = np.array([v for (v, _) in frontier])
     returns = np.array([ret for (_, ret) in frontier])
+
     # Values to crop plot
     min_x = min(0, min(optimal_p[0], default_p[0]))
     min_y = min(0, min(optimal_p[1], default_p[1]))
     max_x = volatility.max()
     max_y = max(max(optimal_p[1], default_p[1]), returns.max())
 
-    if optimal_p[0] != 0 and default_p[0] !=0:
+    if optimal_p[0] != 0 and default_p[0] != 0:
         min_sharpe = min((optimal_p[1]/optimal_p[0]), (default_p[1]/default_p[0]))
     else:
         min_sharpe = 0
@@ -29,37 +33,58 @@ def plot_frontier(frontier, optimal_p, default_p, show = True, save = False):
     # Cap sharpe ratio color map
     Z = np.minimum(Z, 5)
     Z = np.maximum(Z, min_sharpe)
+
     plt.figure()
 
-    # Background heatmap (blue → yellow)
+    # Background heatmap
     contour = plt.contourf(X, Y, Z, levels=10, cmap="viridis")
 
-    # Efficient frontier line in middle
-    plt.plot(volatility, returns, color="white", linewidth=1, label=f"Efficient Frontier", zorder=2)
+    # Efficient frontier
+    plt.plot(volatility, returns, color="white", linewidth=1, label="Efficient Frontier", zorder=2)
 
-    # opt/user portfolio on top
+    # Optional random portfolios
+    if random_points is not None and len(random_points) > 0:
+        rand_vol = np.array([v for (v, _) in random_points])
+        rand_ret = np.array([r for (_, r) in random_points])
+
+        plt.scatter(
+            rand_vol,
+            rand_ret,
+            color="white",
+            s=15,
+            alpha=0.7,
+            label="Random Portfolios",
+            zorder=1
+        )
+
+    # Optimal portfolio
     if optimal_p is not None:
         opx, opy = optimal_p
-        plt.scatter(opx, opy, color="red", marker="x", s=100, linewidths=2, label="Tangent Portfolio", zorder=3)
+        plt.scatter(opx, opy, color="red", marker="x", s=100, linewidths=2,
+                    label="Tangent Portfolio", zorder=3)
 
+    # Default/user portfolio
     if default_p is not None:
         dpx, dpy = default_p
         dpx = min(dpx, max_x)
-        plt.scatter(dpx, dpy, color="orange", marker="x", s=100, linewidths=2, label="Your Portfolio", zorder=3)
+        plt.scatter(dpx, dpy, color="orange", marker="x", s=100, linewidths=2,
+                    label="Your Portfolio", zorder=3)
 
     # Labels and legend
     plt.xlabel("Volatility")
     plt.ylabel("Expected Return")
     plt.legend()
 
-    # Colorbar (Sharpe ratio index)
+    # Colorbar
     cbar = plt.colorbar(contour)
     cbar.set_label("Sharpe Ratio")
 
     plt.xlim(min_x, max_x)
     plt.ylim(min_y, max_y)
+
     if save:
-        save_fig(plt, file_name = "efficient_frontier")
+        save_fig(plt, file_name="efficient_frontier")
+
     if show:
         plt.show()
     else:
