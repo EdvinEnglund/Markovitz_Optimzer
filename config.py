@@ -3,5 +3,6 @@ RF = 0.02
 SHORT_ALLOWED = True
 YEARS = 1
 SHORT_COST = 0.05
+RETURN_CAP = 1.5
 
 DEFAULT_PORTFOLIO_PATH = "data/default_portfolio.json"

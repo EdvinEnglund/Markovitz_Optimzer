@@ -54,6 +54,7 @@ optimal_p = (
 )
 save = input("Do you want to save the frontier figure? (y/n): ")
 Plotters.plot_frontier(frontier, optimal_p, default_p, save = save)
+Plotters.plot_heatmap(valid_tickers, sigma, save = save)
 
 
 

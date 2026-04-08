@@ -2,7 +2,7 @@ from scipy.optimize import minimize
 import numpy as np
 import math
 # LOAD CONFIG CONSTANTS
-from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L
+from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L, RETURN_CAP
 
 # --- HELPERS ---
 # Helper to assert valid L
@@ -65,9 +65,9 @@ def variance(w, sigma, short_cost = SHORT_COST):
     Returns variance of expected return from weight vector w and covariance matrix sigma
     Adjusts optimizer for shorting costs.
     """
-    variance = w.T @ sigma @ w
+    var = w.T @ sigma @ w
     short_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
-    return variance + short_penalty
+    return var + short_penalty
 
 def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
     """
@@ -81,11 +81,11 @@ def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
     return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
 # Objective function for alpha, adjust for shorting cost
-def F_alpha(w, mu, sigma, alpha, short_cost):
-    fa = alpha * (w.T @ sigma @ w) - (1.0 - alpha) * (mu @ w)
+def F_alpha(w, mu, sigma, alpha, short_cost, rf = RF):
     short_positions = np.abs(np.minimum(w, 0))
     short_penalty = np.sum(short_positions) * short_cost
-    return fa + short_penalty
+    fa = alpha * (w.T @ sigma @ w) - (1.0 - alpha) * ((mu @ w) - short_penalty - rf) #
+    return fa
 
 # --- OPTIMIZERS ---
 def get_weights_by_target_return(mu,
@@ -162,7 +162,7 @@ def get_optimal_weights(mu, sigma, rf = RF, short_allowed = SHORT_ALLOWED, L = D
     w = res.x
     return w
 
-def get_weights_by_alpha(mu, sigma, alpha, short_allowed = True, L = 1.5, short_cost = 0.0):
+def get_weights_by_alpha(mu, sigma, alpha, short_allowed = True, L = DEFAULT_L, short_cost = SHORT_COST):
     L = assert_L(L)
 
     n = len(mu)
@@ -181,9 +181,17 @@ def get_weights_by_alpha(mu, sigma, alpha, short_allowed = True, L = 1.5, short_
     )
     return res.x
 
-def get_efficient_frontier(mu, sigma, short_allowed = True, L = 1.5, short_cost = 0.0):
+def get_efficient_frontier(
+        mu,
+        sigma,
+        short_allowed = True,
+        rf = RF,
+        L = DEFAULT_L,
+        short_cost = SHORT_COST,
+        return_cap = RETURN_CAP
+    ):
     res = []
-    alphas = np.arange(0.05, 1.01, 0.05)
+    alphas = np.arange(0.01, 1.01, 0.01)[::-1]
     for alpha in alphas:
         w = get_weights_by_alpha(
             mu,
@@ -193,10 +201,15 @@ def get_efficient_frontier(mu, sigma, short_allowed = True, L = 1.5, short_cost 
             L = L,
             short_cost = short_cost
         )
+        vol = math.sqrt(w.T @ sigma @ w)
+        short_positions = np.abs(np.minimum(w, 0))
+        short_penalty = np.sum(short_positions) * short_cost
+        ret = mu@w - short_penalty - rf
         res.append((
-            math.sqrt(w.T @ sigma @ w),
-            mu@w,
+            vol,
+            ret
         ))
+        if ret > return_cap: break
     return res
 
 

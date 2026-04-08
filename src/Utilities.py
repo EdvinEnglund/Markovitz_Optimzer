@@ -63,8 +63,7 @@ def get_portfolio_stats(portfolio, returns_df, rf = RF, ndigits=4):
     mu = get_expected_returns(returns_df)
     sigma = get_covariance_matrix(returns_df)
     weights = np.array(list(portfolio.values()))
-    # adds rf because neg_return function subtracts it
-    expected_return = -Optimizer.neg_return(weights, mu) + rf
+    expected_return = -Optimizer.neg_return(weights, mu)
     volatility = math.sqrt(weights.T @ sigma @ weights)
     sharpe = -Optimizer.neg_sharpe_ratio(weights, mu, sigma)
     gross_leverage = np.sum(np.abs(weights))

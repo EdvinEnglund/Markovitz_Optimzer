@@ -7,7 +7,6 @@
 6. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
 7. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
 
-
 1. Create clean pipelines and scripts:
     - one based on tangent portfolio
     - (one on based variance/volatility)
