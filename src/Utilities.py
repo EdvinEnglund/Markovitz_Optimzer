@@ -3,7 +3,7 @@ import pandas as pd
 import math
 from src import Optimizer
 import random
-from config import YEARS, RF, NO_O_RANDOM_POINTS, SHORT_COST
+from config import YEARS, RF, NO_O_RANDOM_POINTS, SHORT_COST, SHORT_ALLOWED, DEFAULT_L
 
 
 def get_log_returns(price_data, date="2026-03-22", years = YEARS):
@@ -46,10 +46,17 @@ def normalize_portfolio(portfolio):
             portfolio[ticker] = 1 / len(portfolio)
     return portfolio
 
-def get_tangent_portfolio(returns_df):
+def get_tangent_portfolio(returns_df, rf = RF, short_allowed = SHORT_ALLOWED, L = DEFAULT_L, short_cost = SHORT_COST):
     mu = get_expected_returns(returns_df)
     sigma = get_covariance_matrix(returns_df)
-    weights = Optimizer.get_optimal_weights(mu, sigma)
+    weights = Optimizer.get_optimal_weights(
+        mu,
+        sigma,
+        rf = rf,
+        short_allowed=short_allowed,
+        L = L,
+        short_cost=short_cost
+    )
     portfolio = {}
     valid_tickers = list(returns_df.columns)
     for i, ticker in enumerate(valid_tickers):

@@ -40,7 +40,7 @@ def set_tickers(default_list):
         tickers = default_list
     return tickers
 
-def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH):
+def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH, save = False):
     print("ADD TICKER-WEIGHT PAIRS (ONE PAIR AT A TIME)")
     print("LEAVE PORTFOLIO EMPTY TO USE DEFAULT PORTFOLIO")
     portfolio = {}
@@ -59,6 +59,16 @@ def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH):
     if len(portfolio) == 0:
         print(f"No portfolio created, using default portfolio at {default_portfolio_path}")
         portfolio = get_portfolio(DEFAULT_PORTFOLIO_PATH)
+        return portfolio
+
+    if save:
+        name = input("Enter the name of your saved portfolio to save (press Enter to skip save): ")
+        if name == "":
+            print("Save skipped")
+            return portfolio
+        save_path = f"data/{name}.json"
+        save_portfolio(portfolio, save_path, default_path=DEFAULT_PORTFOLIO_PATH)
+
     return portfolio
 
 """

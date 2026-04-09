@@ -7,11 +7,6 @@ import pandas as pd
 from config import YEARS, DEFAULT_PORTFOLIO_PATH
 
 my_portfolio = Fetcher.create_portfolio()
-if len(my_portfolio) != 0:
-    save = input(f"Do you want to save portfolio? (y/n): ").strip().lower()
-    if save == "y":
-        save_path = f"data/{input("Enter the name of your saved portfolio to save: ")}.json"
-        Fetcher.save_portfolio(my_portfolio, save_path, default_path = DEFAULT_PORTFOLIO_PATH)
 
 tickers = my_portfolio.keys()
 

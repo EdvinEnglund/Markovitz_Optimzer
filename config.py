@@ -8,3 +8,4 @@ RETURN_CAP = 2
 NO_O_RANDOM_POINTS = 300
 
 DEFAULT_PORTFOLIO_PATH = "data/default_portfolio.json"
+BENCHMARK_PORTFOLIO_PATH = "data/benchmark_portfolio.json"
