@@ -1,34 +1,24 @@
-1. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE
-2. Make terminal app script to load and analyze (should maybe just call no 5)
-3. Make terminal app script to create and save
-4. Make full pipeline function (w. hyperparameters) that takes list OR dict and returns optimal dict
-5. Make full pipeline function (w. hyperparameters) that takes list OR dict and analyzes portfolio (if list, only show optimal)
+99. CHECK IF SHORT PENALTY FOR VARIANCE MAKES SENSE FOR OPTIMZER BASED ON RETURN
 
-1. Create clean pipelines and scripts:
-    - one based on tangent portfolio
-    - (one on based variance/volatility)
-    - (one on expected return)
-    - one for efficient frontier
-    - one with input weights (json) vs tangent portfolio (vs equal weights ?) -> stats
+0. Clean and refractor:
+    - remove unused files.
+    - add child folder analyzer in src and put files there
+    - create files portfolio.py analyzer.py optimizer.py fetcher.py plotter.py in src/
+    - move functions accordingly to above
+    - comment files cleanly
+    - add README.md
 
-    - plot functions:
-        * Efficient frontier w. sharpe color gradient background
-            - Make it take and plot also default/user-portfolio X
-            - Make it save plot to /media
-        * Covariance matrix colormap
-        * PCA w. tickers plotted
-
-1.5. When done w. above, clean all files from junk, clean imports etc.
-
-2. Create Notebooks
-
+1. Make full pipeline function (w. hyperparameters) that takes list
+2. Create Notebook for analysis
 3. Perform back test tangent vs index vs equal weighted
     - compare short, no short, different L.
-    - plot total 5 linecharts/plot (3 L values for tangent + index + eq weight)
+    - one plot development for tangent + index + eq weight
+    - one plot comparing different L values
     - try different time periods for est return/cov
     - try different time horizons for benchmark
+    - compare pct of best returns for portfolios as validation score?
 
-4. (Create alternative functions for expected return and covariance)
+4. (Create alternative functions scripts on expected return and variance?)
 5. (Adjust for dividends???)
 6. Add individual shortability and fee capability (Optional)
     - Must be vectors, not scalar / boolean

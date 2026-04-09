@@ -70,16 +70,6 @@ def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH, save = Fal
         save_portfolio(portfolio, save_path)
     return portfolio
 
-"""
-def get_portfolio(default_portfolio_path):
-    root = Path(__file__).resolve().parents[1]
-    file_path = root / default_portfolio_path
-    with open(file_path, "r") as f:
-        portfolio = json.load(f)
-    return normalize_portfolio(portfolio)
-"""
-
-
 def get_portfolio(path = DEFAULT_PORTFOLIO_PATH):
     root = Path(__file__).resolve().parents[1]
     file_path = root / path
