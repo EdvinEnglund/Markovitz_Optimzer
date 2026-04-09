@@ -86,12 +86,14 @@ def main(my_portfolio = "CREATE",
         optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Volatility"],
         optimal_portfolio_stats.at[optimal_portfolio_stats.index[0], "Expected Return"]
     )
-
-    if show_plots:
+    if benchmark:
         benchmark_p = (
             benchmark_portfolio_stats.at[benchmark_portfolio_stats.index[0], "Volatility"],
             benchmark_portfolio_stats.at[benchmark_portfolio_stats.index[0], "Expected Return"]
         )
+    else: benchmark_p = None
+
+    if show_plots:
         Plotters.plot_frontier(frontier,
                                optimal_p,
                                default_p,
@@ -111,8 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--short_allowed", action="store_true", default=SHORT_ALLOWED)
     parser.add_argument("--L", type=float, default=DEFAULT_L)
     parser.add_argument("--short_cost", type=float, default=SHORT_COST)
-    #Change below to default = False
-    parser.add_argument("--benchmark", action="store_true", default=True)
+    parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--benchmark_path", default=BENCHMARK_PORTFOLIO_PATH)
     parser.add_argument("--save-portfolio", action="store_true", help="Save created portfolio to file")
     parser.add_argument("--no-plots", action="store_true", help="Disable plotting")
