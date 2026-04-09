@@ -62,13 +62,12 @@ def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH, save = Fal
         return portfolio
 
     if save:
-        name = input("Enter the name of your saved portfolio to save (press Enter to skip save): ")
+        name = input("Enter the name of your saved portfolio to save in data/ (press Enter to skip save): ")
         if name == "":
             print("Save skipped")
             return portfolio
         save_path = f"data/{name}.json"
-        save_portfolio(portfolio, save_path, default_path=DEFAULT_PORTFOLIO_PATH)
-
+        save_portfolio(portfolio, save_path)
     return portfolio
 
 """
@@ -88,9 +87,10 @@ def get_portfolio(path = DEFAULT_PORTFOLIO_PATH):
         portfolio = json.load(f)
     return Utilities.normalize_portfolio(portfolio)
 
-def save_portfolio(portfolio, path , default_path = DEFAULT_PORTFOLIO_PATH):
+def save_portfolio(portfolio, path):
     if path == "":
-        path = default_path
+        print("Save skipped")
+        return
     root = Path(__file__).resolve().parents[1]
     save_path = root / path
     try:

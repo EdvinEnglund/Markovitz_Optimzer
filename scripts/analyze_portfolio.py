@@ -15,6 +15,7 @@ def main(my_portfolio = "CREATE",
          benchmark_path = BENCHMARK_PORTFOLIO_PATH,
          benchmark = True,
          save_portfolio = False,
+         save_optimal = False,
          show_plots = True,
          save_plots = False,
          show_stats = True,
@@ -46,6 +47,9 @@ def main(my_portfolio = "CREATE",
                                                         short_allowed = short_allowed,
                                                         L = L,
                                                         short_cost = short_cost)
+    if save_optimal:
+        path = f"data/{input("Enter the name (w/o. extension) of the tangent portfolio to save at /data: ")}.json"
+        Fetcher.save_portfolio(optimal_portfolio, path)
     optimal_portfolio_stats = Utilities.get_stats(optimal_portfolio, log_returns, rf = rf)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_columns', None)
@@ -116,6 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--benchmark_path", default=BENCHMARK_PORTFOLIO_PATH)
     parser.add_argument("--save-portfolio", action="store_true", help="Save created portfolio to file")
+    parser.add_argument("--save-optimal", action="store_true", help="Save optimal portfolio to file")
     parser.add_argument("--no-plots", action="store_true", help="Disable plotting")
     parser.add_argument("--save-plots", action="store_true", help="Save plots to files")
     parser.add_argument("--no-stats", action="store_true", help="Disable stats printing")
@@ -130,6 +135,7 @@ if __name__ == "__main__":
         short_cost=args.short_cost,
         benchmark=args.benchmark,
         save_portfolio=args.save_portfolio,
+        save_optimal=args.save_optimal,
         show_plots=not args.no_plots,
         save_plots=args.save_plots,
         show_stats=not args.no_stats,
