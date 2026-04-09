@@ -2,8 +2,16 @@
 
 0. Clean and refractor:
     - remove unused files.
-    - add child folder analyzer in src and put files there
-    - create files portfolio.py analyzer.py optimizer.py fetcher.py plotter.py in src/
+    - add child folder analyzer/ in src and put files there (__init__ in analyzer/)
+    - create files:
+        portfolio.py (portfolio creater, reader, randomizer etc.)
+        analyzer.py (expected return, sigma, get_tangent portfolio etc.)
+        (should contain function that takes price_df, date and time-interval and returns portfolio)
+        optimizer.py (optimizer functions import sharpe etc from analyzer.)
+        fetcher.py (get and slice price data (yfinance or read from csv), create returns data(custom time-interval, i.e weekly returns)
+        plotter.py
+        in analyzer/
+    - data should have child dirs portfolios/, price_data/, media/ (results?)
     - move functions accordingly to above
     - comment files cleanly
     - add README.md

@@ -70,7 +70,7 @@ def main(my_portfolio = "CREATE",
             print("Benchmark portfolio stats:")
             print(benchmark_portfolio_stats)
 
-    random_points = Utilities.get_randomized_portfolios(my_portfolio, log_returns)
+    random_points = Utilities.get_randomized_portfolios(valid_portfolio, log_returns)
     random_portfolio_stats = Utilities.get_mean_random_portfolio_stats(random_points)
     print("Mean of random portfolio stats:")
     print(random_portfolio_stats)

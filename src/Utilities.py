@@ -5,7 +5,6 @@ from src import Optimizer
 import random
 from config import YEARS, RF, NO_O_RANDOM_POINTS, SHORT_COST, SHORT_ALLOWED, DEFAULT_L
 
-
 def get_log_returns(price_data, date="2026-03-22", years = YEARS):
     """
     Takes: Pandas DataFrame price_data with closing prices.
