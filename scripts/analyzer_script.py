@@ -1,6 +1,3 @@
-from src.Fetcher import *
-from src.Frontier import *
-from src.Plotters import *
 from config import RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L, YEARS, DEFAULT_PORTFOLIO_PATH
 
 # LOAD CONFIG CONSTANTS

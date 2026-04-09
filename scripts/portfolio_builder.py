@@ -1,4 +1,5 @@
-from src import Fetcher
+from src.portfolio_analyzer import fetcher
+
 
 def main():
     Fetcher.create_portfolio(save=True)

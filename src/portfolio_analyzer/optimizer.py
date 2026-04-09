@@ -1,4 +1,5 @@
 from scipy.optimize import minimize
+from src.portfolio_analyzer import utilities
 import numpy as np
 import math
 # LOAD CONFIG CONSTANTS
@@ -11,7 +12,7 @@ def assert_L(L):
     if L < 1:
         L = 1
     if L == 1.0:
-        # L = 1.0 breaks optimizer logic, increment float
+        # L = 1.0 breaks portfolio_analyzer logic, increment float
         # ugly fix but works best
         L += 0.0001
     return L
@@ -48,38 +49,6 @@ def get_constraints_and_bounds(n, L = DEFAULT_L, short_allowed = SHORT_ALLOWED):
         bounds = [(0, None)] * n
     return constraints, bounds
 
-# --- OBJECTIVE FUNCTIONS FOR OPTIMIZERS ---
-def neg_return(w, mu, rf = RF, short_cost = SHORT_COST):
-    """
-    Objective function for optimizer based on target volatility.
-    Returns negative of expected return from weight vector w and expected return vector mu.
-    Adjusts for interest rate and shorting costs.
-    """
-    portfolio_return = np.dot(w, mu)
-    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
-    return - (portfolio_return - short_penalty - rf)
-
-def variance(w, sigma, short_cost = SHORT_COST):
-    """
-    Objective function for optimizer based on target return
-    Returns variance of expected return from weight vector w and covariance matrix sigma
-    Adjusts optimizer for shorting costs.
-    """
-    var = w.T @ sigma @ w
-    short_penalty = short_cost * np.sum(np.maximum(-w, 0)**2)
-    return var + short_penalty
-
-def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
-    """
-    Objective function for optimizer for tangent portfolio
-    Returns sharepe ratio of expected return from weight vector w, returns vector mu and covariance matrix sigma
-    """
-    portfolio_return = np.dot(w, mu)
-    portfolio_vol = np.sqrt(w @ sigma @ w)
-    # shorting cost
-    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
-    return - (portfolio_return - short_penalty - rf)/portfolio_vol
-
 # Objective function for alpha, adjust for shorting cost
 def F_alpha(w, mu, sigma, alpha, short_cost, rf = RF):
     short_positions = np.abs(np.minimum(w, 0))
@@ -111,9 +80,9 @@ def get_weights_by_target_return(mu,
     #initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
-        variance,
+        utilities.variance,
         w0,
-        args=(sigma, short_cost),
+        args=(sigma),
         method = "SLSQP",
         bounds=bounds,
         constraints=constraints
@@ -135,7 +104,7 @@ def get_weights_by_target_volatility(mu, sigma, target=0.10, short_allowed=True,
     # initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
-        neg_return,
+        utilities.neg_return,
         w0,
         args=(mu, rf, short_cost),
         method="SLSQP",
@@ -152,7 +121,7 @@ def get_optimal_weights(mu, sigma, rf = RF, short_allowed = SHORT_ALLOWED, L = D
     # initial guess = equal weighting
     w0 = np.ones(n) / n
     res = minimize(
-        neg_sharpe_ratio,
+        utilities.neg_sharpe_ratio,
         w0,
         args=(mu, sigma, rf, short_cost),
         method="SLSQP",

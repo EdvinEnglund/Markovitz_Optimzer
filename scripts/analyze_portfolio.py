@@ -1,8 +1,5 @@
 import argparse
-from src import Fetcher
-from src import Optimizer
-from src import Utilities
-from src import Plotters
+from src.portfolio_analyzer import optimizer, utilities, fetcher, plotters, portfolio_tools, analyzer
 from datetime import date
 import pandas as pd
 from config import YEARS, RF, SHORT_ALLOWED, SHORT_COST, DEFAULT_L, BENCHMARK_PORTFOLIO_PATH
@@ -21,45 +18,45 @@ def main(my_portfolio = "CREATE",
          show_stats = True,
          ):
     if my_portfolio == "CREATE":
-        my_portfolio = Fetcher.create_portfolio(save=save_portfolio)
+        my_portfolio = portfolio_tools.create_portfolio(save=save_portfolio)
 
     if isinstance(my_portfolio, str):
         # if file_path
-        my_portfolio = Fetcher.get_portfolio(my_portfolio)
+        my_portfolio = portfolio_tools.get_portfolio(my_portfolio)
 
     tickers = my_portfolio.keys()
     today_str = date.today().strftime("%Y-%m-%d")
     end_date = pd.to_datetime(today_str)
     start_date = end_date - pd.DateOffset(years=years)
     # GET PRICE AND RETURN DATA
-    price_df = Fetcher.fetch_price_data(my_portfolio, start_date, end_date)
+    price_df = fetcher.fetch_price_data(my_portfolio, start_date, end_date)
 
-    log_returns = Utilities.get_log_returns(price_df, date=today_str, years=years)
-    mu = Utilities.get_expected_returns(log_returns)
-    sigma = Utilities.get_covariance_matrix(log_returns)
+    log_returns = utilities.get_log_returns(price_df, date=today_str, years=years)
+    mu = utilities.get_expected_returns(log_returns)
+    sigma = utilities.get_covariance_matrix(log_returns)
 
     valid_tickers = list(price_df.columns)
 
-    valid_portfolio = Utilities.validate_portfolio(my_portfolio, valid_tickers)
-    my_portfolio_stats = Utilities.get_stats(valid_portfolio, log_returns, rf = rf)
-    optimal_portfolio = Utilities.get_tangent_portfolio(log_returns,
+    valid_portfolio = portfolio_tools.validate_portfolio(my_portfolio, valid_tickers)
+    my_portfolio_stats = analyzer.get_stats(valid_portfolio, log_returns, rf = rf)
+    optimal_portfolio = analyzer.get_tangent_portfolio(log_returns,
                                                         rf = rf,
                                                         short_allowed = short_allowed,
                                                         L = L,
                                                         short_cost = short_cost)
     if save_optimal:
         path = f"data/{input("Enter the name (w/o. extension) of the tangent portfolio to save at /data: ")}.json"
-        Fetcher.save_portfolio(optimal_portfolio, path)
-    optimal_portfolio_stats = Utilities.get_stats(optimal_portfolio, log_returns, rf = rf)
+        portfolio_tools.save_portfolio(optimal_portfolio, path)
+    optimal_portfolio_stats = analyzer.get_stats(optimal_portfolio, log_returns, rf = rf)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_columns', None)
     if benchmark:
-        benchmark_portfolio = Fetcher.get_portfolio(benchmark_path)
-        benchmark_price_df = Fetcher.fetch_price_data(benchmark_portfolio, start_date, end_date)
+        benchmark_portfolio = portfolio_tools.get_portfolio(benchmark_path)
+        benchmark_price_df = fetcher.fetch_price_data(benchmark_portfolio, start_date, end_date)
         valid_benchmark_tickers = list(benchmark_price_df.columns)
-        valid_benchmark_portfolio = Utilities.validate_portfolio(benchmark_portfolio, valid_benchmark_tickers)
-        benchmark_log_returns = Utilities.get_log_returns(benchmark_price_df, date=today_str, years=years)
-        benchmark_portfolio_stats = Utilities.get_stats(valid_benchmark_portfolio, benchmark_log_returns)
+        valid_benchmark_portfolio = portfolio_tools.validate_portfolio(benchmark_portfolio, valid_benchmark_tickers)
+        benchmark_log_returns = utilities.get_log_returns(benchmark_price_df, date=today_str, years=years)
+        benchmark_portfolio_stats = analyzer.get_stats(valid_benchmark_portfolio, benchmark_log_returns)
 
     if show_stats:
         print("Your portfolio stats:")
@@ -70,13 +67,13 @@ def main(my_portfolio = "CREATE",
             print("Benchmark portfolio stats:")
             print(benchmark_portfolio_stats)
 
-    random_points = Utilities.get_randomized_portfolios(valid_portfolio, log_returns)
-    random_portfolio_stats = Utilities.get_mean_random_portfolio_stats(random_points)
+    random_points = analyzer.get_randomized_portfolio_points(valid_portfolio, log_returns)
+    random_portfolio_stats = utilities.get_mean_portfolio_stats(random_points)
     print("Mean of random portfolio stats:")
     print(random_portfolio_stats)
 
     # CREATE AND DISPLAY EFFICIENT FRONTIER
-    frontier = Optimizer.get_efficient_frontier(mu,
+    frontier = optimizer.get_efficient_frontier(mu,
                                                 sigma,
                                                 short_allowed = short_allowed,
                                                 rf = rf,
@@ -98,7 +95,7 @@ def main(my_portfolio = "CREATE",
     else: benchmark_p = None
 
     if show_plots:
-        Plotters.plot_frontier(frontier,
+        plotters.plot_frontier(frontier,
                                optimal_p,
                                default_p,
                                save=save_plots,
@@ -106,8 +103,8 @@ def main(my_portfolio = "CREATE",
                                random_points=random_points,
                                benchmark_p = benchmark_p)
 
-        Plotters.plot_heatmap(valid_tickers, sigma, save=save_plots, show=show_plots)
-        Plotters.plot_PCA(log_returns, save=save_plots, show=show_plots)
+        plotters.plot_heatmap(valid_tickers, sigma, save=save_plots, show=show_plots)
+        plotters.plot_PCA(log_returns, save=save_plots, show=show_plots)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

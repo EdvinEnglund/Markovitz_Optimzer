@@ -163,11 +163,10 @@ def plot_PCA(returns_df, save = False, show = True):
     else:
         plt.close()
 
-
     return fig
 
 def save_fig(fig, file_name):
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     base_path = root / "media"
     save_path = base_path / f"{file_name}.png"
     counter = 1

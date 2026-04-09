@@ -1,29 +1,8 @@
-import yfinance as yf
+import numpy as np
+import random
 import json
-from src import Utilities
-from pathlib import Path
 from config import DEFAULT_PORTFOLIO_PATH
-
-def fetch_price_data(tickers, start="2010-01-01", end=None):
-    """
-    Returns closing prices for portfolio or list of tickers from yahoo finance in a pandas dataframe
-    Rows/Index: date YYYY-MM-DD
-    Columns: ticker closing price
-    """
-    if isinstance(tickers, dict):
-        tickers = list(tickers.keys())
-
-    data = yf.download(
-        tickers,
-        start=start,
-        end=end,
-        auto_adjust=True,
-        progress=False
-    )
-    price_data = data.xs("Close", axis=1, level=0)
-    # Drop columns with all NaN (invalid tickers)
-    price_data = price_data.dropna(axis=1, how="all")
-    return price_data
+from pathlib import Path
 
 def set_tickers(default_list):
     tickers = []
@@ -71,57 +50,50 @@ def create_portfolio(default_portfolio_path = DEFAULT_PORTFOLIO_PATH, save = Fal
     return portfolio
 
 def get_portfolio(path = DEFAULT_PORTFOLIO_PATH):
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     file_path = root / path
     with open(file_path, "r") as f:
         portfolio = json.load(f)
-    return Utilities.normalize_portfolio(portfolio)
+    return normalize_portfolio(portfolio)
 
 def save_portfolio(portfolio, path):
     if path == "":
         print("Save skipped")
         return
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     save_path = root / path
     try:
         with open(save_path, "w") as f:
-            json.dump(Utilities.normalize_portfolio(portfolio), f, indent=4)
+            json.dump(normalize_portfolio(portfolio), f, indent=4)
         print(f"Saved portfolio to {save_path}")
     except Exception as e:
         print(f"Failed to save file: {e}")
     return
 
+def normalize_portfolio(portfolio):
+    # Helper to normalize portfolio weights
+    values = np.array(list(portfolio.values()), dtype=float)
+    total = values.sum()
+    if len(portfolio) == 0:
+        print("Warning: no portfolio to normalize")
+        return {}
+    for ticker, weights in portfolio.items():
+        if total != 0:
+            portfolio[ticker] = portfolio[ticker] / total
+        else:
+            portfolio[ticker] = 1 / len(portfolio)
+    return portfolio
 
+def randomize_portfolio(portfolio):
+    port = {}
+    if isinstance(portfolio, dict):
+        for ticker, weights in portfolio.items():
+            port[ticker] = random.random() - 0.5
+    else:
+        for ticker in portfolio:
+            port[ticker] = random.random() - 0.5
+    return normalize_portfolio(port)
 
-def set_target_return():
-    """
-    Input function for optimizer based on target return
-    """
-    try:
-        p = float(input("Choose target return: "))
-    except ValueError:
-        print("Invalid input. Using default = 0.1")
-        p = 0.1
-    if p < 0:
-        p = 0
-    print(f"Setting expected return to {p}")
-    return p
-
-def set_target_volatility():
-    """
-    Input function for optimizer based on target volatility
-    """
-    try:
-        p = float(input("Choose target volatility: "))
-    except ValueError:
-        print("Invalid input. Using default = 0.1")
-        p = 0.1
-    if p < 0:
-        p = 0
-    print(f"Setting expected volatility to {p}")
-    return p
-
-
-
-
-
+def validate_portfolio(portfolio, valid_tickers):
+    valid_portfolio = {k.upper(): v for k, v in portfolio.items() if k.upper() in set(valid_tickers)}
+    return normalize_portfolio(valid_portfolio)
