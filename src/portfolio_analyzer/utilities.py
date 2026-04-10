@@ -1,32 +1,14 @@
 import numpy as np
 import pandas as pd
-from config import YEARS, RF, SHORT_COST
+from config import RF, SHORT_COST
 
-def get_log_returns(price_data, date="2026-03-22", years = YEARS):
-    """
-    Takes: Pandas DataFrame price_data with closing prices.
-    Crops by reference date and timescope in years
-    Returns: Pandas DataFrame price_data with log. daily returns
-    """
-    end_date = pd.to_datetime(date)
-    start_date = end_date - pd.DateOffset(years=years)
-    price_data = price_data.loc[start_date:end_date]
-    log_returns = np.log(price_data / price_data.shift(1)).dropna()
-    return log_returns
-
-def get_expected_returns(returns):
-    """
-    Takes: Pandas DataFrame price_data with daily log returns.
-    """
+def get_greeks(returns):
     mu = (returns.mean() * 252).values
-    return mu
-
-def get_covariance_matrix(returns):
-    """
-    Takes: Pandas DataFrame price_data with daily log returns.
-    """
     sigma = (returns.cov() * 252).values
-    return sigma
+    return mu, sigma
+
+def get_short_penalty(weights, short_cost=SHORT_COST):
+    return short_cost * np.sum(np.maximum(-weights, 0))
 
 def neg_return(w, mu, rf = RF, short_cost = SHORT_COST):
     """
@@ -35,7 +17,7 @@ def neg_return(w, mu, rf = RF, short_cost = SHORT_COST):
     Adjusts for interest rate and shorting costs.
     """
     portfolio_return = np.dot(w, mu)
-    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
+    short_penalty = get_short_penalty(w, short_cost = short_cost)
     return - (portfolio_return - short_penalty - rf)
 
 def variance(w, sigma):
@@ -55,7 +37,7 @@ def neg_sharpe_ratio(w, mu, sigma, rf = RF, short_cost = SHORT_COST):
     portfolio_return = np.dot(w, mu)
     portfolio_vol = np.sqrt(w @ sigma @ w)
     # shorting cost
-    short_penalty = short_cost * np.sum(np.maximum(-w, 0))
+    short_penalty = get_short_penalty(w, short_cost = short_cost)
     return - (portfolio_return - short_penalty - rf)/portfolio_vol
 
 def get_mean_portfolio_stats(points, ndigits = 4):

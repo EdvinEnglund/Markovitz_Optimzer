@@ -173,7 +173,7 @@ def get_efficient_frontier(
         vol = math.sqrt(w.T @ sigma @ w)
         short_positions = np.abs(np.minimum(w, 0))
         short_penalty = np.sum(short_positions) * short_cost
-        ret = mu@w - short_penalty - rf
+        ret = mu@w - short_penalty
         res.append((
             vol,
             ret

@@ -1,4 +1,7 @@
 import yfinance as yf
+import pandas as pd
+import numpy as np
+from config import YEARS
 
 def fetch_price_data(tickers, start="2010-01-01", end=None):
     """
@@ -20,6 +23,18 @@ def fetch_price_data(tickers, start="2010-01-01", end=None):
     # Drop columns with all NaN (invalid tickers)
     price_data = price_data.dropna(axis=1, how="all")
     return price_data
+
+def get_log_returns(price_data, date="2026-03-22", years = YEARS):
+    """
+    Takes: Pandas DataFrame price_data with closing prices.
+    Crops by reference date and timescope in years
+    Returns: Pandas DataFrame price_data with log. daily returns
+    """
+    end_date = pd.to_datetime(date)
+    start_date = end_date - pd.DateOffset(years=years)
+    price_data = price_data.loc[start_date:end_date]
+    log_returns = np.log(price_data / price_data.shift(1)).dropna()
+    return log_returns
 
 
 

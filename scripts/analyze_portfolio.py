@@ -31,14 +31,15 @@ def main(my_portfolio = "CREATE",
     # GET PRICE AND RETURN DATA
     price_df = fetcher.fetch_price_data(my_portfolio, start_date, end_date)
 
-    log_returns = utilities.get_log_returns(price_df, date=today_str, years=years)
-    mu = utilities.get_expected_returns(log_returns)
-    sigma = utilities.get_covariance_matrix(log_returns)
+    log_returns = fetcher.get_log_returns(price_df, date=today_str, years=years)
 
+    #mu = utilities.get_expected_returns(log_returns)
+    #sigma = utilities.get_covariance_matrix(log_returns)
+    mu, sigma = utilities.get_greeks(log_returns)
     valid_tickers = list(price_df.columns)
 
     valid_portfolio = portfolio_tools.validate_portfolio(my_portfolio, valid_tickers)
-    my_portfolio_stats = analyzer.get_stats(valid_portfolio, log_returns, rf = rf)
+    my_portfolio_stats = analyzer.get_stats(valid_portfolio, log_returns, rf = rf, short_cost=short_cost)
     optimal_portfolio = analyzer.get_tangent_portfolio(log_returns,
                                                         rf = rf,
                                                         short_allowed = short_allowed,
@@ -55,7 +56,7 @@ def main(my_portfolio = "CREATE",
         benchmark_price_df = fetcher.fetch_price_data(benchmark_portfolio, start_date, end_date)
         valid_benchmark_tickers = list(benchmark_price_df.columns)
         valid_benchmark_portfolio = portfolio_tools.validate_portfolio(benchmark_portfolio, valid_benchmark_tickers)
-        benchmark_log_returns = utilities.get_log_returns(benchmark_price_df, date=today_str, years=years)
+        benchmark_log_returns = fetcher.get_log_returns(benchmark_price_df, date=today_str, years=years)
         benchmark_portfolio_stats = analyzer.get_stats(valid_benchmark_portfolio, benchmark_log_returns)
 
     if show_stats:
