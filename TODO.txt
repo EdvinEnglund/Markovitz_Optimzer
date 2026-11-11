@@ -6,12 +6,6 @@
     - comment files cleanly
     - add README.md
 
-1. Create get_returns data that converts price_data to returns (daily, weekly, monthly)
-2. Create slicer that slices by tickers/portfolio(optional) and number of data_points (i.e. trading days/weeks)
-3. Change get_log_returns, expected_returns and covariance to get_greeks. should take pre-slicedreturns data
-(propagate changes everywhere mu, sigma is used)
-4. make analyzer/get tangent take slice of returns_data and get greeks from within that
-5. change main script accordingly
 6. save price data as csv (i.e for benchmark etl).
 7. load price csv
 
